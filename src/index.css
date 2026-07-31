@@ -2,807 +2,465 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens ported from cs-gsu_official_website/src/index.css via
-   cs-gsu_member_portal. Keep these in sync with the main site. They are the source
-   of truth for the look, not tailwind.config.js. Montserrat is loaded in index.html. */
-:root {
-  --gsu-blue: #0039A6;
-  --gsu-blue-dim: #002a7a;
-  --gsu-blue-bright: #1d56c9;
-  --gsu-red: #CC0000;
-  --gsu-red-dark: #a30000;
-  --gsu-sky: #97CAEB;
-  --ink: #ffffff;
-  --paper: #091024;
-  --paper-warm: #0d152d;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.2);
-  --mono: 'Montserrat', system-ui, sans-serif;
-  --display: 'Montserrat', system-ui, sans-serif;
+/* ============================================================================
+   Design system
+   ============================================================================
+   Modelled on app.colorstack.io, not on cs-gsu_official_website. The marketing
+   site is a marketing site: dark navy, Montserrat, pill buttons, uppercase
+   eyebrows. This is an application, and an application should get out of the way.
 
-  /* Sponsor brand accents. Default to GSU blue so an unthemed page is
-     indistinguishable from the main site. SponsorTheme overwrites these per sponsor,
-     and falls back to exactly these values when a brand colour fails contrast.
-     Deliberately scoped to accents: buttons, eyebrows, the tier card, active nav.
-     The page surface stays --paper so a bad brand hex cannot wreck the layout. */
-  --sponsor-brand: #0039A6;
-  --sponsor-brand-bright: #1d56c9;
-  --sponsor-brand-dim: #002a7a;
-  --sponsor-brand-soft: rgba(0, 57, 166, 0.12);
-  --sponsor-ink: #ffffff;
+   White surface, thin grey rules, 8px corners, system font, sentence case. GSU blue
+   is the only accent and it is used sparingly: primary buttons, links, the active
+   nav item, focus rings. Nothing here is decorative for its own sake.
+
+   Sponsor brand theming later overrides --brand only, so a sponsor's colour lands on
+   the same small set of accents and can never take over the page. */
+
+:root {
+  /* Brand */
+  --gsu-blue: #0039A6;
+  --gsu-blue-bright: #1d56c9;
+  --gsu-blue-dim: #002a7a;
+  --gsu-red: #CC0000;
+
+  /* Accent, overridable per sponsor. Defaults to GSU blue, and falls back to it
+     when a sponsor's colour fails the contrast floor. */
+  --brand: #0039A6;
+  --brand-hover: #002a7a;
+  --brand-soft: #eef3fc;
+  --brand-ink: #ffffff;
+
+  /* Surfaces */
+  --paper: #ffffff;
+  --surface: #ffffff;
+  --surface-subtle: #f9fafb;
+  --surface-hover: #f3f4f6;
+
+  /* Rules */
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
+
+  /* Ink */
+  --ink: #111827;
+  --ink-muted: #6b7280;
+  --ink-faint: #9ca3af;
+
+  /* Status. Tints rather than saturated fills, so a table of them stays calm. */
+  --ok: #067647;
+  --ok-bg: #ecfdf3;
+  --ok-line: #abefc6;
+  --warn: #b54708;
+  --warn-bg: #fffaeb;
+  --warn-line: #fedf89;
+  --bad: #b42318;
+  --bad-bg: #fef3f2;
+  --bad-line: #fecdca;
+  --info: #175cd3;
+  --info-bg: #eff8ff;
+  --info-line: #b2ddff;
+
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; overflow-x: hidden; width: 100%; }
+
+  html { width: 100%; overflow-x: hidden; }
+
   body {
-    font-family: var(--display);
+    font-family: var(--font);
     background: var(--paper);
     color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
-    line-height: 1.4;
     -webkit-font-smoothing: antialiased;
   }
+
   a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-  h1, h2, h3, h4 { font-family: var(--display); }
+  button { font-family: inherit; font-size: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  h1 { font-size: 24px; }
+  h2 { font-size: 18px; }
+  h3 { font-size: 16px; }
+
+  /* One visible focus treatment everywhere. Keyboard users get a ring, mouse users
+     do not, and it is never removed outright. */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
-/* ============ PAGE FADE-IN ============ */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: none; }
-}
-.fade-in-up {
-  opacity: 0;
-  animation: fade-in-up 0.6s cubic-bezier(.2,.6,.2,1) both;
-}
-.fade-delay-1 { animation-delay: 0.1s; }
-.fade-delay-2 { animation-delay: 0.2s; }
-.fade-delay-3 { animation-delay: 0.3s; }
+/* ============ LAYOUT ============ */
 
-@media (prefers-reduced-motion: reduce) {
-  .fade-in-up { opacity: 1; animation: none; }
+.shell { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+
+/* The app is a reading column, not a full-bleed marketing page. */
+.wrap { width: 100%; max-width: 940px; margin: 0 auto; padding: 0 24px; }
+.wrap-narrow { width: 100%; max-width: 420px; margin: 0 auto; padding: 0 24px; }
+
+.page { padding: 40px 0 80px; }
+
+@media (max-width: 640px) {
+  .wrap, .wrap-narrow { padding: 0 16px; }
+  .page { padding: 28px 0 56px; }
 }
 
-/* ============ SECTION EYEBROW ============ */
-.section-eyebrow {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--gsu-sky);
+/* ============ TOP BAR ============ */
+/* A plain bar with a hairline under it. The marketing site floats a white pill over
+   a dark hero, which needs a hero to float over. */
+
+.topbar {
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.topbar-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.section-eyebrow::before {
-  content: '';
-  width: 32px; height: 1px;
-  background: var(--gsu-sky);
-  display: inline-block;
+  justify-content: space-between;
+  gap: 16px;
+  height: 56px;
 }
 
-/* ============ NAV ============ */
-.nav-logo-img { height: 36px; width: 36px; }
-.nav-brand-text { font-size: 14px; }
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.brand img { width: 26px; height: 26px; border-radius: 50%; display: block; flex-shrink: 0; }
+.brand-text { font-weight: 600; font-size: 14.5px; white-space: nowrap; }
 
-@media (min-width: 768px) {
-  .nav-bar { padding: 8px 20px !important; }
-  .nav-logo-img { height: 32px; width: 32px; }
-  .nav-brand-text { font-size: 14px; }
-}
+.nav { display: flex; align-items: center; gap: 2px; }
 
-/* The signed-in pill holds a brand lockup and three links. On a 390px phone that
-   is about 100px more than fits, and because the pill is absolutely positioned the
-   excess pushes the whole document sideways rather than clipping. Below 640px the
-   wordmark goes and the links tighten: the logo still identifies the page. */
-@media (max-width: 640px) {
-  .app-nav .nav-brand-text { display: none; }
-  .nav-link { padding: 8px 10px; font-size: 10px; letter-spacing: 0.02em; }
-}
-
-/* Signed-in nav links inside the white pill. */
 .nav-link {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  border-radius: 999px;
-  color: rgba(9, 16, 36, 0.6);
-  font-weight: 500;
-  transition: color 0.2s, background 0.2s;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--ink-muted);
   white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
 }
-.nav-link:hover { color: #091024; background: rgba(9, 16, 36, 0.05); }
-.nav-link.active {
-  color: var(--sponsor-brand);
-  background: var(--sponsor-brand-soft);
-  font-weight: 600;
-}
+.nav-link:hover { background: var(--surface-hover); color: var(--ink); }
+.nav-link.active { color: var(--brand); font-weight: 500; }
 
-/* ============ AUTH BACKDROP ============
-   A solid GSU blue field. The member portal floats its auth card over a photo
-   mosaic; this portal has no photo set of its own, so it uses the brand colour
-   flat. Fixed, so it never scrolls with the form.
-
-   The only modulation is a light lift toward --gsu-blue-bright behind the card and
-   a fall to --gsu-blue-dim at the edges. That is depth, not a second colour: every
-   stop is one of the three GSU blues already in :root. */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background: var(--gsu-blue);
-  background-image:
-    radial-gradient(ellipse 100% 75% at 50% 42%, var(--gsu-blue-bright) 0%, rgba(29, 86, 201, 0) 62%),
-    linear-gradient(180deg, rgba(0, 57, 166, 0) 45%, var(--gsu-blue-dim) 100%);
+@media (max-width: 560px) {
+  .brand-text { display: none; }
+  .nav-link { padding: 6px 8px; font-size: 13.5px; }
 }
 
-/* One soft highlight so the flat field is not dead. Brand blue only. */
-.backdrop-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
+/* ============ FOOTER ============ */
+
+.foot {
+  border-top: 1px solid var(--line);
+  padding: 20px 0;
+  font-size: 13px;
+  color: var(--ink-faint);
 }
-.backdrop-orb-a {
-  width: 520px; height: 520px;
-  top: -180px; left: -120px;
-  background: rgba(29, 86, 201, 0.55);
-}
-.backdrop-orb-b {
-  width: 420px; height: 420px;
-  bottom: -160px; right: -100px;
-  background: rgba(0, 42, 122, 0.6);
-}
+.foot-inner { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; }
+.foot a { color: var(--ink-muted); }
+.foot a:hover { color: var(--ink); text-decoration: underline; }
 
-@media (max-width: 768px) {
-  .backdrop-orb { filter: blur(70px); }
-}
+/* ============ AUTH ============ */
+/* Centred card on a tiled mark, the one flourish this design keeps. The tile is the
+   chapter logo at 5 percent, so it reads as texture and never competes with the
+   card. */
 
-/* ============ PORTAL SHELL ============ */
-/* The portal is an app, not a marketing page: one centred column that clears the
-   floating navbar. */
-.portal-pad { padding: 140px 32px 96px; }
-
-@media (max-width: 768px) {
-  .portal-pad { padding: 110px 20px 64px; }
-  .container-wide { padding-left: 20px !important; padding-right: 20px !important; }
-}
-
-/* Dashboards and invoice tables need more room than the member portal's single
-   profile form, but the full 1400px makes line lengths unreadable. */
-.portal-col { width: 100%; max-width: 1060px; margin: 0 auto; }
-.portal-col-narrow { width: 100%; max-width: 560px; margin: 0 auto; }
-
-/* ============ AUTH PAGE FIT ============
-   Sign in and activation are short forms, so scrolling them feels broken. These
-   pin the page to exactly one viewport and centre the card in it.
-
-   main keeps overflow-y:auto on purpose: on a very short viewport (landscape
-   phone, small laptop) the content still has to be reachable. Clipping the sign
-   in button would be a worse bug than a scrollbar. */
-.auth-page {
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.auth-page main {
+.auth {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow-y: auto;
-  padding: 104px 0 44px; /* clears the floating navbar and the status pill */
+  padding: 48px 0;
+  position: relative;
 }
 
-.auth-pad { width: 100%; }
-
-/* Scaffold marker. Fixed so it costs the layout no height. */
-.auth-status {
-  position: fixed;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  z-index: 2;
-  margin: 0;
-  width: fit-content;   /* a block <p> would otherwise stretch the full viewport */
-  max-width: calc(100% - 32px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* The mark is a filled circle, so tiling it tightly reads as a grey block field
+   rather than as texture. Small mark, wide cell, and faded out towards the middle so
+   the card always sits on clean white. */
+.auth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/colorstack-gsu-logo.png');
+  background-size: 18px 18px;
+  background-position: 0 0;
+  background-repeat: space;
+  opacity: 0.07;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 55% 60% at 50% 50%, transparent 30%, #000 100%);
+  -webkit-mask-image: radial-gradient(ellipse 55% 60% at 50% 50%, transparent 30%, #000 100%);
 }
 
-@media (max-width: 768px) {
-  .auth-page main { padding: 92px 0 40px; }
-}
-
-/* Short viewports (1280x720 laptops, landscape phones) are what actually push the
-   auth forms past one screen, not narrow ones. Claw the height back by degrees. */
-@media (max-height: 800px) {
-  .auth-page main { padding: 78px 0 28px; }
-  .auth-page .auth-card { padding: 22px; }
-  .auth-page .auth-card .divider-or { margin: 14px 0; }
-  .auth-page .auth-sub { margin-top: 6px; }
-}
-
-@media (max-height: 700px) {
-  .auth-page main { padding: 68px 0 30px; }
-  .auth-page .auth-card { padding: 17px; }
-  .auth-page .auth-sub,
-  .auth-page .auth-fineprint { display: none; }
-  .auth-page .section-eyebrow { margin-bottom: 9px; }
-  .auth-page .auth-card .divider-or { margin: 11px 0; }
-}
+.auth > * { position: relative; z-index: 1; }
 
 @layer components {
-  .container-wide {
-    @apply mx-auto w-full max-w-[1400px] px-8;
-  }
+  /* ============ CARD ============ */
 
-  /* Bordered panel on the warm paper tone: the portal's main content surface. */
-  .panel {
-    background: var(--paper-warm);
+  .card {
+    background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 32px;
+    border-radius: var(--radius-lg);
+    padding: 20px;
   }
 
-  .panel-tight { padding: 22px 24px; }
-
-  .field-label {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.55);
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .field-input {
-    width: 100%;
-    font-family: var(--display);
-    font-size: 15px;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--ink);
-    border: 1px solid var(--line-strong);
-    border-radius: 12px;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .field-input::placeholder { color: rgba(255, 255, 255, 0.35); }
-  .field-input:focus {
-    outline: none;
-    border-color: var(--gsu-blue-bright);
-    background: rgba(255, 255, 255, 0.07);
-  }
-  .field-input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .btn-primary {
-    font-family: var(--mono);
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 16px 28px;
-    background: var(--sponsor-brand);
-    color: var(--sponsor-ink);
-    border-radius: 999px;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .btn-primary:hover:not(:disabled) {
-    background: var(--sponsor-brand-bright);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px -10px rgba(0,57,166,0.6);
-  }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .btn-secondary {
-    font-family: var(--mono);
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 16px 28px;
-    background: transparent;
-    color: var(--ink);
-    border: 1px solid var(--line-strong);
-    border-radius: 999px;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-  }
-  .btn-secondary:hover {
-    border-color: var(--gsu-sky);
-    color: var(--gsu-sky);
-  }
-
-  /* Sits on solid GSU-blue bands, mirroring the main site's accent CTA. */
-  .btn-accent {
-    font-family: var(--mono);
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 16px 28px;
-    background: #ffffff;
-    color: var(--gsu-blue);
-    border-radius: 999px;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    font-weight: 600;
-  }
-  .btn-accent:hover {
-    background: var(--gsu-sky);
-    color: var(--gsu-blue-dim);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  }
-
-  /* Compact variant for table rows and card corners, where a full-height pill
-     button would set the row height. */
-  .btn-sm { padding: 10px 18px; font-size: 11px; }
-
-  /* One-time codes and invoice numbers. Wide tracking so the digits read as
-     digits rather than as a word. */
-  .code-input {
-    width: 100%;
-    font-family: var(--mono);
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: 0.4em;
-    text-align: center;
-    text-indent: 0.4em; /* offsets the trailing letter-space so digits look centred */
-    padding: 18px 16px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--ink);
-    border: 1px solid var(--line-strong);
-    border-radius: 12px;
-  }
-  .code-input::placeholder { color: rgba(255, 255, 255, 0.2); }
-  .code-input:focus {
-    outline: none;
-    border-color: var(--gsu-blue-bright);
-    background: rgba(255, 255, 255, 0.07);
-  }
-
-  /* "or" rule separating two paths on a form. */
-  .divider-or {
+  .card-head {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin: 28px 0;
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
-  }
-  .divider-or::before,
-  .divider-or::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--line);
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
   }
 
-  .notice-info {
-    border: 1px solid rgba(151, 202, 235, 0.35);
-    background: rgba(151, 202, 235, 0.08);
-    border-radius: 12px;
-    padding: 16px 18px;
+  .card-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+
+  /* ============ BUTTONS ============ */
+  /* Sentence case, 8px corners, no letter-spacing. The uppercase wide-tracked pill
+     from the marketing site reads as a billboard CTA, which is wrong on a form a
+     billing contact uses once a quarter. */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: var(--radius);
     font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+  }
+
+  .btn-primary { background: var(--brand); color: var(--brand-ink); }
+  .btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
+
+  .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+  .btn-secondary:hover:not(:disabled) { background: var(--surface-hover); }
+
+  .btn-ghost { color: var(--ink-muted); }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--ink); }
+
+  .btn-danger { background: var(--surface); color: var(--bad); border-color: var(--bad-line); }
+  .btn-danger:hover:not(:disabled) { background: var(--bad-bg); }
+
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-sm { padding: 6px 10px; font-size: 13px; }
+  .btn-block { width: 100%; }
+
+  /* ============ FORMS ============ */
+
+  .field { display: block; margin-bottom: 14px; }
+
+  .label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 5px;
+  }
+
+  .input {
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 14.5px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    transition: border-color 0.12s, box-shadow 0.12s;
+  }
+  .input::placeholder { color: var(--ink-faint); }
+  .input:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-soft);
+  }
+  .input:disabled { background: var(--surface-subtle); color: var(--ink-faint); cursor: not-allowed; }
+
+  .hint { font-size: 13px; color: var(--ink-muted); margin-top: 5px; }
+
+  /* ============ NOTICES ============ */
+
+  .note {
+    border: 1px solid var(--line);
+    background: var(--surface-subtle);
+    border-radius: var(--radius);
+    padding: 11px 13px;
+    font-size: 13.5px;
     line-height: 1.5;
-    color: #dceefb;
+  }
+  .note-info { border-color: var(--info-line); background: var(--info-bg); color: #0b3d91; }
+  .note-warn { border-color: var(--warn-line); background: var(--warn-bg); color: #93370d; }
+  .note-error { border-color: var(--bad-line); background: var(--bad-bg); color: #912018; }
+
+  /* Marks a screen that is not wired up yet. Dashed so it never reads as real UI. */
+  .note-preview {
+    border: 1px dashed var(--line-strong);
+    background: transparent;
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    text-align: center;
   }
 
-  /* Banner marking screens that are UI-only walkthroughs, not working auth. */
-  .notice-preview {
-    border: 1px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.45);
-  }
+  /* ============ STATUS PILLS ============ */
+  /* Every pill spells its status out. Colour never carries the meaning alone, so
+     this survives colour blindness and a greyscale print of the invoice. */
 
-  /* Rejection / error state. */
-  .notice-error {
-    border: 1px solid rgba(204, 0, 0, 0.5);
-    background: rgba(204, 0, 0, 0.1);
-    border-radius: 12px;
-    padding: 16px 18px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: #ffd9d9;
-  }
-
-  /* Money owed, or an action the sponsor still has to take. Amber rather than
-     red: an unpaid invoice that is not yet late is not an error. */
-  .notice-warn {
-    border: 1px solid rgba(245, 176, 65, 0.4);
-    background: rgba(245, 176, 65, 0.08);
-    border-radius: 12px;
-    padding: 16px 18px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: #ffe4b8;
-  }
-
-  /* ===== STATUS PILLS =====
-     Invoice and task state. Colour alone never carries the meaning: every pill
-     also spells its status out, so this reads correctly for colour-blind users
-     and in a greyscale print of the invoice. */
   .pill {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 6px 12px;
+    gap: 6px;
+    padding: 2px 9px;
     border-radius: 999px;
-    border: 1px solid transparent;
+    border: 1px solid;
+    font-size: 12.5px;
+    font-weight: 500;
     white-space: nowrap;
   }
-  .pill::before {
-    content: '';
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    flex-shrink: 0;
-  }
-  .pill-paid    { color: #7ee0a8; border-color: rgba(126, 224, 168, 0.35); background: rgba(126, 224, 168, 0.1); }
-  .pill-issued  { color: #ffd08a; border-color: rgba(255, 208, 138, 0.35); background: rgba(255, 208, 138, 0.1); }
-  /* ACH takes 3 to 5 business days to settle. The sponsor has paid but the money
-     has not landed, so this cannot read as either unpaid or paid. */
-  .pill-processing { color: #97CAEB; border-color: rgba(151, 202, 235, 0.35); background: rgba(151, 202, 235, 0.1); }
-  .pill-overdue { color: #ff9d9d; border-color: rgba(255, 157, 157, 0.35); background: rgba(255, 157, 157, 0.1); }
+  .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  .pill-paid       { color: var(--ok);   background: var(--ok-bg);   border-color: var(--ok-line); }
+  .pill-issued     { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-line); }
+  /* ACH takes 3 to 5 business days. The sponsor has paid but the money has not
+     landed, so this must read as neither unpaid nor paid. */
+  .pill-processing { color: var(--info); background: var(--info-bg); border-color: var(--info-line); }
+  .pill-overdue    { color: var(--bad);  background: var(--bad-bg);  border-color: var(--bad-line); }
   .pill-draft,
-  .pill-void    { color: rgba(255, 255, 255, 0.5); border-color: var(--line-strong); background: rgba(255, 255, 255, 0.04); }
+  .pill-void       { color: var(--ink-muted); background: var(--surface-subtle); border-color: var(--line); }
 
-  /* ===== DATA TABLE =====
-     Invoice lists. Rules between rows only, no vertical lines, matching the main
-     site's restraint. */
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  .data-table th {
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.45);
+  /* ============ TABLE ============ */
+
+  .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .table th {
     text-align: left;
-    padding: 0 16px 12px 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    padding: 0 12px 8px 0;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .table td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .table tr:last-child td { border-bottom: none; }
+  .table th:last-child, .table td:last-child { padding-right: 0; text-align: right; }
+  .table tbody tr:hover { background: var(--surface-subtle); }
+
+  /* Invoice numbers, amounts and dates. Tabular figures so columns line up. */
+  .num { font-variant-numeric: tabular-nums; }
+
+  .link { color: var(--brand); }
+  .link:hover { text-decoration: underline; }
+
+  .muted { color: var(--ink-muted); }
+  .faint { color: var(--ink-faint); }
+
+  /* ============ ROW LIST ============ */
+  /* The invoice list on a phone. A table there either scrolls sideways or crushes
+     the amount column, and the amount is the column that matters. */
+
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
     border-bottom: 1px solid var(--line);
   }
-  .data-table td {
-    padding: 16px 16px 16px 0;
-    border-bottom: 1px solid var(--line);
-    vertical-align: middle;
-  }
-  .data-table tr:last-child td { border-bottom: none; }
-  .data-table th:last-child,
-  .data-table td:last-child { padding-right: 0; text-align: right; }
-  .data-table tbody tr { transition: background 0.15s; }
-  .data-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
-
-  /* Invoice numbers, amounts, dates. Tabular figures so the columns line up. */
-  .tabular { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-
-  /* A table is the wrong shape on a phone. Below 720px the invoice list swaps to
-     these stacked cards rather than scrolling sideways. */
-  .row-card {
-    display: block;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 12px;
-  }
-
-  /* ===== LIGHT AUTH SURFACE =====
-     Login and Activate float a white card over the backdrop. Everything below
-     re-tints the shared components for a light background. The signed-in pages
-     keep the dark treatment, so these are deliberately scoped to .auth-card. */
-  .auth-card {
-    position: relative;
-    z-index: 1;
-    background: #ffffff;
-    color: #091024;
-    border: 1px solid rgba(9, 16, 36, 0.08);
-    border-radius: 22px;
-    padding: 28px;
-    box-shadow: 0 30px 70px -20px rgba(9, 16, 36, 0.45);
-  }
-
-  /* Auth forms are height-constrained, so they run tighter than the dark pages. */
-  .auth-card .field-input { padding: 12px 14px; }
-  .auth-card .btn-primary,
-  .auth-card .btn-secondary { padding: 14px 24px; }
-  .auth-card .divider-or { margin: 20px 0; }
-  .auth-card .notice-info,
-  .auth-card .notice-error { padding: 12px 14px; font-size: 13px; }
-
-  .auth-card .field-label { color: rgba(9, 16, 36, 0.55); }
-
-  .auth-card .field-input,
-  .auth-card .code-input {
-    background: rgba(9, 16, 36, 0.03);
-    color: #091024;
-    border-color: rgba(9, 16, 36, 0.15);
-  }
-  .auth-card .field-input::placeholder,
-  .auth-card .code-input::placeholder { color: rgba(9, 16, 36, 0.3); }
-  .auth-card .field-input:focus,
-  .auth-card .code-input:focus {
-    border-color: var(--gsu-blue);
-    background: rgba(0, 57, 166, 0.04);
-  }
-
-  .auth-card .btn-secondary {
-    color: var(--gsu-blue);
-    border-color: rgba(0, 57, 166, 0.35);
-  }
-  .auth-card .btn-secondary:hover {
-    border-color: var(--gsu-blue);
-    background: rgba(0, 57, 166, 0.06);
-    color: var(--gsu-blue-dim);
-  }
-
-  .auth-card .divider-or { color: rgba(9, 16, 36, 0.4); }
-  .auth-card .divider-or::before,
-  .auth-card .divider-or::after { background: rgba(9, 16, 36, 0.12); }
-
-  .auth-card .notice-info {
-    border-color: rgba(0, 57, 166, 0.2);
-    background: rgba(0, 57, 166, 0.05);
-    color: #1c3057;
-  }
-
-  .auth-card .notice-error {
-    border-color: rgba(204, 0, 0, 0.35);
-    background: rgba(204, 0, 0, 0.05);
-    color: #8a1414;
-  }
-
-  .auth-card .muted { color: rgba(9, 16, 36, 0.55); }
-  .auth-card a { color: var(--gsu-blue); }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: var(--surface-subtle); }
 }
 
-/* ============ DASHBOARD GRID ============
-   Tier and tasks sit side by side on a laptop and stack on a phone. Two equal
-   columns rather than a sidebar: neither one is subordinate to the other. */
-.dash-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  align-items: start;
-}
+/* Tier and tasks sit side by side on a laptop and stack on a phone. Two equal
+   columns rather than a sidebar: neither is subordinate to the other. */
+/* stretch, not start: two cards of different heights side by side look unfinished,
+   and the tier card is always shorter than the task list. */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-top: 20px; }
 
-@media (max-width: 860px) {
+@media (max-width: 760px) {
   .dash-grid { grid-template-columns: 1fr; }
 }
 
-/* ============ RESPONSIVE TABLE SWAP ============
-   The invoice list renders as a table and as stacked cards, and exactly one of the
-   two is ever shown. display:none takes the hidden one out of the accessibility
-   tree too, so a screen reader never meets both copies. */
-.only-narrow { display: none; }
+/* Exactly one of the table and the row list is ever rendered. display:none takes the
+   hidden one out of the accessibility tree, so a screen reader never meets both. */
 .only-wide { display: table; }
+.only-narrow { display: none; }
 
-@media (max-width: 720px) {
-  .only-narrow { display: block; }
+@media (max-width: 700px) {
   .only-wide { display: none; }
+  .only-narrow { display: block; }
 }
 
 /* ============ INVOICE DOCUMENT ============ */
-.invoice-head {
+
+.doc-head {
   display: flex;
   justify-content: space-between;
-  gap: 32px;
+  gap: 28px;
   flex-wrap: wrap;
-  padding-bottom: 28px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--line);
 }
+.doc-meta { text-align: right; min-width: 190px; }
 
-.invoice-meta { text-align: right; min-width: 200px; }
+.doc-dates { display: grid; grid-template-columns: auto auto; justify-content: end; gap: 3px 14px; margin: 12px 0 0; font-size: 13.5px; }
+.doc-dates dt { color: var(--ink-muted); }
+.doc-dates dd { margin: 0; }
 
-@media (max-width: 600px) {
-  .invoice-meta { text-align: left; }
-}
+.doc-parties { padding: 20px 0; border-bottom: 1px solid var(--line); }
+.doc-lines { margin-top: 20px; }
+.doc-lines tfoot td { padding-top: 14px; border-bottom: none; border-top: 2px solid var(--ink); }
+.doc-remit { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
 
-/* Label/value pairs as a two-column grid, so the values line up regardless of how
-   long each label is. */
-.invoice-dates {
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: end;
-  gap: 5px 16px;
-  margin: 18px 0 0;
-  font-size: 13px;
-}
-.invoice-dates dt {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  align-self: center;
-}
-.invoice-dates dd { margin: 0; color: rgba(255, 255, 255, 0.85); }
+.remit { display: grid; grid-template-columns: auto 1fr; gap: 7px 20px; margin: 12px 0 0; font-size: 13.5px; }
+.remit dt { color: var(--ink-muted); }
+.remit dd { margin: 0; }
+
+.doc-foot { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-faint); }
 
 @media (max-width: 600px) {
-  .invoice-dates { justify-content: start; }
-}
-
-.invoice-parties { padding: 28px 0; border-bottom: 1px solid var(--line); }
-
-.invoice-lines { margin-top: 28px; }
-.invoice-lines tfoot td {
-  padding-top: 20px;
-  border-bottom: none;
-  border-top: 2px solid var(--line-strong);
-}
-
-.invoice-remit { margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line); }
-
-.remit-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px 24px;
-  margin: 18px 0 0;
-  font-size: 13.5px;
-}
-.remit-grid dt {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  align-self: center;
-}
-.remit-grid dd { margin: 0; color: rgba(255, 255, 255, 0.85); }
-
-@media (max-width: 520px) {
-  .remit-grid { grid-template-columns: 1fr; gap: 2px; }
-  .remit-grid dd { margin-bottom: 12px; }
-}
-
-.invoice-foot {
-  margin-top: 32px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  .doc-meta { text-align: left; min-width: 0; }
+  .doc-dates { justify-content: start; }
+  .remit { grid-template-columns: 1fr; gap: 1px; }
+  .remit dd { margin-bottom: 10px; }
 }
 
 /* ============ PRINT ============
    The invoice page is the invoice. A sponsor's AP department prints it to PDF and
-   files it, so print flips the document to black on white and strips every piece of
-   app chrome around it. There is no second PDF renderer that could drift out of
+   files it. There is deliberately no second PDF renderer that could drift out of
    sync with what is shown on screen.
 
-   Colours are forced rather than inherited: the dark theme prints as either a solid
-   black rectangle or, with background graphics off, white text on white paper. */
+   Now that the app is light, print mostly just strips the chrome. */
 @media print {
   @page { margin: 16mm; }
 
-  html, body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
+  /* .topbar, not a bare `header`: the invoice has its own <header> holding the logo,
+     the invoice number and the dates, and a blanket rule prints an invoice with no
+     letterhead and no number on it. */
+  .topbar, .foot, .no-print, .note-preview { display: none !important; }
 
-  /* Everything that is not the document itself.
-     Targets .app-nav, not the bare `header` tag: the invoice has its own <header>
-     holding the logo, the invoice number and the dates, and a blanket `header`
-     rule silently prints the invoice with no letterhead and no number on it. */
-  .app-nav, footer.portal-footer, .no-print, .notice-preview, .backdrop { display: none !important; }
+  .page { padding: 0 !important; }
+  .wrap { max-width: none !important; padding: 0 !important; }
 
-  /* Layout sets the page background inline, which outranks any plain rule here.
-     Without this the whole sheet prints as a solid navy rectangle. */
-  .app-shell { background: #ffffff !important; }
+  .card { border: none !important; padding: 0 !important; border-radius: 0 !important; }
 
-  .portal-pad { padding: 0 !important; }
-  .portal-col { max-width: none !important; }
-
-  .invoice-doc {
-    background: #ffffff !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    color: #000000 !important;
-  }
-
-  /* The design system leans on rgba white for secondary text, which is invisible on
-     paper. Reset every descendant, then re-dim the ones that should stay quiet. */
-  .invoice-doc * { color: #000000 !important; background: transparent !important; }
-  .invoice-doc .field-label,
-  .invoice-doc dt,
-  .invoice-doc .invoice-foot { color: #555555 !important; }
-
-  .invoice-doc .data-table th { color: #555555 !important; border-bottom-color: #cccccc !important; }
-  .invoice-doc .data-table td { border-bottom-color: #eeeeee !important; }
-  .invoice-doc .invoice-head,
-  .invoice-doc .invoice-parties,
-  .invoice-doc .invoice-remit,
-  .invoice-doc .invoice-foot { border-color: #cccccc !important; }
-  .invoice-doc .invoice-lines tfoot td { border-top-color: #000000 !important; }
-
-  .invoice-doc .notice-warn {
-    border: 1px solid #999999 !important;
-    color: #000000 !important;
-  }
+  /* Grey secondary text is fine on screen and washes out on paper. */
+  .muted, .faint, .doc-dates dt, .remit dt, .table th { color: #444 !important; }
+  .doc-foot { color: #666 !important; }
 
   /* Never split the payment instructions or a line item across two sheets. */
-  .invoice-remit, .invoice-lines { break-inside: avoid; }
-
-  .fade-in-up { opacity: 1 !important; animation: none !important; }
-}
-
-/* Text sitting directly on the backdrop (headings, footer, preview banner) rather
-   than inside the card. The field is solid GSU blue, so this text is white and the
-   eyebrow is sky: dark ink here would be unreadable. Everything inside .auth-card
-   stays dark, because the card itself is still white. */
-.auth-page .auth-heading { color: #ffffff; }
-.auth-page .auth-sub { color: rgba(255, 255, 255, 0.75); }
-.auth-page .section-eyebrow { color: var(--gsu-sky); }
-.auth-page .section-eyebrow::before { background: var(--gsu-sky); }
-
-.auth-page .notice-preview {
-  position: relative;
-  z-index: 1;
-  border-color: rgba(255, 255, 255, 0.35);
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 42, 122, 0.35);
-}
-
-.auth-page .portal-footer {
-  position: relative;
-  z-index: 1;
-  border-top-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 42, 122, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.auth-page .portal-footer a { color: var(--gsu-sky); }
-
-/* The card lifts off a saturated field rather than a pale one, so it needs a
-   deeper shadow to read as floating. */
-.auth-page .auth-card { box-shadow: 0 40px 80px -24px rgba(0, 20, 60, 0.6); }
-
-/* Keeps page content above the fixed backdrop. */
-.auth-page main { position: relative; z-index: 1; }
-
-@media (max-width: 480px) {
-  .btn-primary, .btn-secondary, .btn-accent { justify-content: center; }
+  .doc-remit, .doc-lines { break-inside: avoid; }
 }

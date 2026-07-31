@@ -40,41 +40,41 @@ comma, parentheses, or two sentences.
 
 ## Design system
 
-Ported from `../cs-gsu_member_portal`, which ported it from
-`../cs-gsu_official_website`. The source of truth is the `:root` block in
-[`src/index.css`](src/index.css), **not** `tailwind.config.js`.
+Modelled on **app.colorstack.io**, not on `../cs-gsu_official_website`. This is a
+deliberate split: the marketing site is a marketing site (dark navy, Montserrat, pill
+buttons, uppercase eyebrows), and this is an application, which should get out of the
+way. The chapter's own member portal should move to this language too.
 
-The main site's `tailwind.config.js` declares Space Grotesk and its `index.css` has a
-stale Space Grotesk `@import`, but its `--display` and `--mono` vars both resolve to
-**Montserrat** and every component reads those vars, so Space Grotesk never renders.
-This repo drops the dead config and uses Montserrat throughout.
+The source of truth is the `:root` block in [`src/index.css`](src/index.css), **not**
+`tailwind.config.js`.
 
-- Paper `#091024`, warm panel `#0d152d`, ink `#ffffff` (dark only)
-- GSU blue `#0039A6`, bright `#1d56c9`, dim `#002a7a`, sky `#97CAEB`, red `#CC0000`
-- Fully-rounded buttons, uppercase 13px Montserrat, `0.04em` tracking
-- Floating white pill navbar, `rgba(255,255,255,0.92)` with `blur(20px)`
+- White surface `#ffffff`, subtle `#f9fafb`, hairline rules `#e5e7eb`
+- Ink `#111827`, muted `#6b7280`, faint `#9ca3af`
+- GSU blue `#0039A6` is the **only** accent: primary buttons, links, active nav, focus
+  rings. Nothing else is coloured for decoration
+- 8px corners, `ui-sans-serif / system-ui`, sentence case, no letter-spacing
+- Plain sticky top bar with a hairline under it, not a floating pill
 
-**Sign in and account setup are light**, a white card over a blueprint-grid backdrop.
-Everything behind the login stays dark navy. The light overrides are all scoped to
-`.auth-card` / `.auth-page`.
+What was deliberately removed: dark navy surfaces, Montserrat, fully-rounded pill
+buttons, uppercase wide-tracked eyebrow labels, gradients and blurred colour orbs. All
+of it was decoration doing no work.
 
-The member portal floats its auth card over a photo mosaic. This repo has no photo set
-of its own, so `Backdrop.tsx` draws a GSU-blue grid instead. If the chapter ever wants
-the mosaic here, copy `PhotoMosaic.tsx` and its build script across.
+Sign in and account setup centre a card on a faintly tiled chapter mark. The mark is a
+filled circle, so it is tiled small, sparse, and masked out towards the middle: tiled
+tightly it reads as a grey block field rather than as texture.
 
-### Sponsor brand theming (step 9, not built yet)
+### Sponsor brand theming (step 10, not built yet)
 
-`--sponsor-brand*` and `--sponsor-ink` in `:root` currently resolve to GSU blue, so an
-unthemed page is indistinguishable from the main site. They will be overwritten per
-sponsor at runtime.
+`--brand`, `--brand-hover`, `--brand-soft` and `--brand-ink` default to GSU blue and get
+overwritten per sponsor at runtime.
 
 Two rules when that lands:
 
-- **Accents only.** Buttons, eyebrow rules, the tier card, active nav. The page surface
-  stays `--paper`. A brand colour that recolours everything means one bad hex wrecks the
-  whole page.
-- **Contrast floor.** If a brand colour fails 4.5:1 against `--paper`, fall back to GSU
-  blue. A dark navy sponsor brand on a dark navy page is invisible.
+- **Accents only.** They are already scoped to buttons, links, the active nav item and
+  focus rings. Do not widen that set. A brand colour that recolours everything means one
+  bad hex wrecks the whole page.
+- **Contrast floor.** If a brand colour fails 4.5:1 against white, fall back to GSU blue.
+  A pale yellow brand on a white page is invisible.
 
 ## Money-safety rules
 

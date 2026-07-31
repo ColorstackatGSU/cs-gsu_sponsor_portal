@@ -6,39 +6,27 @@ import { displayStatus, formatDate, formatMoney, daysUntil } from '../lib/format
 /**
  * Shell only: everything here reads from src/data/mock.ts.
  *
- * The page answers three questions in order, because that is the order a sponsor
- * cares about them: do I owe you anything, what am I getting, and what do you need
- * from me. Anything else belongs on another page.
+ * The page answers three questions in the order a sponsor cares about them: do I owe
+ * you anything, what am I getting, and what do you need from me.
  */
 export default function Dashboard() {
   const sponsor = MOCK_SPONSOR;
   const tier = findTier(sponsor.tierId);
   const openInvoice = MOCK_INVOICES.find((i) => i.status === 'issued' || i.status === 'processing');
   const openTasks = MOCK_TASKS.filter((t) => t.status === 'todo');
-  const recentInvoices = MOCK_INVOICES.slice(0, 3);
+  const recent = MOCK_INVOICES.slice(0, 3);
 
   return (
-    <section className="portal-pad">
-      <div className="portal-col">
-        {/* ===== HEADER ===== */}
-        <div className="fade-in-up">
-          <p className="section-eyebrow" style={{ marginBottom: 14 }}>
-            Sponsor Portal
-          </p>
-          <h1 style={{ fontSize: 'clamp(30px, 4vw, 42px)', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
-            {sponsor.name}
-          </h1>
-          <p style={{ marginTop: 8, fontSize: 15, color: 'rgba(255,255,255,0.6)' }}>
-            Signed in as {MOCK_CONTACT.fullName}
-            {MOCK_CONTACT.title ? `, ${MOCK_CONTACT.title}` : ''}
-          </p>
-        </div>
+    <div className="page">
+      <div className="wrap">
+        <h1>{sponsor.name}</h1>
+        <p className="muted" style={{ fontSize: 14, marginTop: 2 }}>
+          Signed in as {MOCK_CONTACT.fullName}
+          {MOCK_CONTACT.title ? `, ${MOCK_CONTACT.title}` : ''}
+        </p>
 
-        {/* ===== AMOUNT DUE =====
-            First thing on the page when there is one, because it is the only thing
-            on this page with a deadline attached. */}
         {openInvoice && (
-          <OutstandingBanner
+          <Outstanding
             amountCents={openInvoice.amountCents}
             invoiceNumber={openInvoice.invoiceNumber}
             dueAt={openInvoice.dueAt}
@@ -46,68 +34,49 @@ export default function Dashboard() {
           />
         )}
 
-        <div className="dash-grid fade-in-up fade-delay-2" style={{ marginTop: 24 }}>
+        <div className="dash-grid">
           {/* ===== TIER ===== */}
-          <div className="panel">
-            <p className="field-label" style={{ marginBottom: 14 }}>
-              Your sponsorship
-            </p>
+          <div className="card">
+            <div className="card-head">
+              <span className="card-title">Your sponsorship</span>
+              {tier && <button type="button" className="btn btn-secondary btn-sm" disabled>Change</button>}
+            </div>
+
             {tier ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-                  <h2 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
-                    {tier.name}
-                  </h2>
-                  <span className="tabular" style={{ fontSize: 17, color: 'var(--gsu-sky)', fontWeight: 600 }}>
-                    {formatMoney(tier.amountCents)}
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
-                      {' '}
-                      / year
-                    </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 20, fontWeight: 600 }}>{tier.name}</span>
+                  <span className="num muted" style={{ fontSize: 14 }}>
+                    {formatMoney(tier.amountCents)} per year
                   </span>
                 </div>
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 0' }}>
-                  {tier.benefits.map((benefit) => (
+                <ul style={{ listStyle: 'none', padding: 0, margin: '14px 0 0' }}>
+                  {tier.benefits.map((b) => (
                     <li
-                      key={benefit}
-                      style={{
-                        display: 'flex',
-                        gap: 10,
-                        alignItems: 'flex-start',
-                        padding: '9px 0',
-                        borderTop: '1px solid var(--line)',
-                        fontSize: 14,
-                        color: 'rgba(255,255,255,0.78)',
-                      }}
+                      key={b}
+                      style={{ display: 'flex', gap: 8, padding: '6px 0', fontSize: 14, color: 'var(--ink-muted)' }}
                     >
-                      <span aria-hidden="true" style={{ color: 'var(--sponsor-brand-bright)', flexShrink: 0 }}>
-                        +
-                      </span>
-                      {benefit}
+                      <span aria-hidden="true" style={{ color: 'var(--brand)' }}>&#8226;</span>
+                      {b}
                     </li>
                   ))}
                 </ul>
-
-                <button type="button" className="btn-secondary btn-sm" style={{ marginTop: 22 }} disabled>
-                  Change tier
-                </button>
               </>
             ) : (
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, margin: 0 }}>
-                No tier assigned yet. We'll set this up with you.
-              </p>
+              <p className="muted" style={{ fontSize: 14 }}>No tier assigned yet. We'll set this up with you.</p>
             )}
           </div>
 
           {/* ===== TASKS ===== */}
-          <div className="panel">
-            <p className="field-label" style={{ marginBottom: 14 }}>
-              What we need from you
-            </p>
+          <div className="card">
+            <div className="card-head">
+              <span className="card-title">What we need from you</span>
+              {openTasks.length > 0 && <span className="faint" style={{ fontSize: 13 }}>{openTasks.length} open</span>}
+            </div>
 
             {openTasks.length === 0 ? (
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, margin: 0 }}>
+              <p className="muted" style={{ fontSize: 14 }}>
                 Nothing outstanding. We'll let you know when something comes up.
               </p>
             ) : (
@@ -118,38 +87,18 @@ export default function Dashboard() {
                   return (
                     <li
                       key={task.id}
-                      style={{
-                        padding: '14px 0',
-                        borderTop: i === 0 ? 'none' : '1px solid var(--line)',
-                      }}
+                      style={{ padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid var(--line)' }}
                     >
-                      <p style={{ margin: 0, fontSize: 14.5, fontWeight: 600 }}>{task.title}</p>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{task.title}</p>
                       {task.description && (
-                        <p
-                          style={{
-                            margin: '5px 0 0',
-                            fontSize: 13,
-                            lineHeight: 1.5,
-                            color: 'rgba(255,255,255,0.55)',
-                          }}
-                        >
-                          {task.description}
-                        </p>
+                        <p className="muted" style={{ margin: '3px 0 0', fontSize: 13.5 }}>{task.description}</p>
                       )}
                       {task.dueAt && (
                         <p
-                          className="tabular"
-                          style={{
-                            margin: '7px 0 0',
-                            fontFamily: 'var(--mono)',
-                            fontSize: 11,
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: late ? '#ff9d9d' : 'rgba(255,255,255,0.4)',
-                          }}
+                          className="num"
+                          style={{ margin: '4px 0 0', fontSize: 12.5, color: late ? 'var(--bad)' : 'var(--ink-faint)' }}
                         >
-                          {late ? 'Was due ' : 'Due '}
-                          {formatDate(task.dueAt)}
+                          {late ? 'Was due ' : 'Due '}{formatDate(task.dueAt)}
                         </p>
                       )}
                     </li>
@@ -161,91 +110,46 @@ export default function Dashboard() {
         </div>
 
         {/* ===== RECENT INVOICES ===== */}
-        <div className="panel fade-in-up fade-delay-3" style={{ marginTop: 24 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 16,
-              marginBottom: 18,
-            }}
-          >
-            <p className="field-label" style={{ margin: 0 }}>
-              Recent invoices
-            </p>
-            <Link
-              to="/invoices"
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'var(--gsu-sky)',
-              }}
-            >
-              View all
-            </Link>
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="card-head">
+            <span className="card-title">Recent invoices</span>
+            <Link to="/invoices" className="link" style={{ fontSize: 13.5 }}>View all</Link>
           </div>
 
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {recentInvoices.map((invoice, i) => (
-              <li key={invoice.id} style={{ borderTop: i === 0 ? 'none' : '1px solid var(--line)' }}>
-                <Link
-                  to={`/invoices/${invoice.invoiceNumber}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 16,
-                    flexWrap: 'wrap',
-                    padding: '15px 0',
-                  }}
-                >
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span className="tabular" style={{ fontSize: 14, fontWeight: 600 }}>
-                      {invoice.invoiceNumber}
-                    </span>
-                    <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)' }}>
-                      Issued {formatDate(invoice.issuedAt)}
-                    </span>
+          <div className="rows">
+            {recent.map((inv) => (
+              <Link key={inv.id} to={`/invoices/${inv.invoiceNumber}`} className="row">
+                <span>
+                  <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{inv.invoiceNumber}</span>
+                  <span className="faint" style={{ display: 'block', fontSize: 12.5 }}>
+                    Issued {formatDate(inv.issuedAt)}
                   </span>
-                  {/* Fixed widths so the amounts and the pills form two straight
-                      columns. Pills vary in width by several characters, and left
-                      to themselves they drag the amounts out of alignment. */}
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <span
-                      className="tabular"
-                      style={{ fontSize: 15, fontWeight: 600, minWidth: 92, textAlign: 'right' }}
-                    >
-                      {formatMoney(invoice.amountCents)}
-                    </span>
-                    <span style={{ minWidth: 160, display: 'flex', justifyContent: 'flex-end' }}>
-                      <StatusPill status={displayStatus(invoice)} />
-                    </span>
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{formatMoney(inv.amountCents)}</span>
+                  <span style={{ minWidth: 132, display: 'flex', justifyContent: 'flex-end' }}>
+                    <StatusPill status={displayStatus(inv)} />
                   </span>
-                </Link>
-              </li>
+                </span>
+              </Link>
             ))}
-          </ul>
+          </div>
         </div>
 
-        <p className="notice-preview" style={{ marginTop: 28, textAlign: 'center' }}>
-          Preview with sample data. Not wired to Supabase yet.
-        </p>
+        <p className="note-preview" style={{ marginTop: 20 }}>Sample data. Not wired to the API yet.</p>
       </div>
-    </section>
+    </div>
   );
 }
 
 /**
- * The amount-due banner. Says exactly one thing and gives exactly one action.
+ * The amount-due strip. Says one thing and offers one action.
  *
  * ACH gets its own copy: money that has left the sponsor's account but has not
  * settled is neither unpaid nor paid, and telling a company that already paid you
  * that they still owe you is the fastest way to lose them.
  */
-function OutstandingBanner({
+function Outstanding({
   amountCents,
   invoiceNumber,
   dueAt,
@@ -261,46 +165,32 @@ function OutstandingBanner({
 
   return (
     <div
-      className={`fade-in-up fade-delay-1 ${processing ? 'notice-info' : late ? 'notice-error' : 'notice-warn'}`}
+      className={`card ${processing ? 'note-info' : late ? 'note-error' : 'note-warn'}`}
       style={{
-        marginTop: 28,
+        marginTop: 20,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 20,
+        gap: 16,
         flexWrap: 'wrap',
-        padding: '22px 24px',
       }}
     >
       <div>
-        <p
-          style={{
-            margin: 0,
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            opacity: 0.8,
-          }}
-        >
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 500 }}>
           {processing ? 'Payment in progress' : late ? 'Overdue' : 'Amount due'}
         </p>
-        <p className="tabular" style={{ margin: '6px 0 0', fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em' }}>
+        <p className="num" style={{ margin: '2px 0 0', fontSize: 24, fontWeight: 600 }}>
           {formatMoney(amountCents)}
         </p>
-        <p style={{ margin: '6px 0 0', fontSize: 13.5, opacity: 0.85 }}>
+        <p style={{ margin: '2px 0 0', fontSize: 13.5 }}>
           {processing ? (
-            <>
-              Bank transfer for {invoiceNumber} is clearing. This usually takes 3 to 5 business
-              days, and we'll email you when it lands.
-            </>
+            <>Bank transfer for {invoiceNumber} is clearing. This usually takes 3 to 5 business days.</>
           ) : (
             <>
               {invoiceNumber}
               {dueAt && (
                 <>
-                  {' '}
-                  &middot; {late ? 'was due' : 'due'} {formatDate(dueAt)}
+                  {' '}&middot; {late ? 'was due' : 'due'} {formatDate(dueAt)}
                   {!late && days !== null && days <= 30 && ` (${days} days)`}
                 </>
               )}
@@ -309,7 +199,7 @@ function OutstandingBanner({
         </p>
       </div>
 
-      <Link to={`/invoices/${invoiceNumber}`} className="btn-primary" style={{ flexShrink: 0 }}>
+      <Link to={`/invoices/${invoiceNumber}`} className="btn btn-primary">
         {processing ? 'View invoice' : 'Pay this invoice'}
       </Link>
     </div>
