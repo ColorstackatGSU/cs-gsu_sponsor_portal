@@ -24,7 +24,7 @@ export default function Layout() {
         flexDirection: 'column',
         // The backdrop is fixed and only covers the viewport, so anything taller
         // than one screen would otherwise expose the dark body colour underneath.
-        background: isAuth ? '#dfe8f5' : 'var(--paper)',
+        background: isAuth ? 'var(--gsu-blue)' : 'var(--paper)',
       }}
     >
       {isAuth && <Backdrop />}
