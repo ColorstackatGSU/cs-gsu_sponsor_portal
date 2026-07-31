@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+.env
+.env.*
+# The negations have to be this specific: `.env.*` matches `.env.local.example`
+# too, so a bare `!.env.example` would silently leave the Edge Function template
+# untracked.
+!.env.example
+!supabase/.env.local.example
+
+# Supabase CLI working files. Migrations, seed, config and functions ARE committed.
+supabase/.branches
+supabase/.temp
+
+.DS_Thumbs
+.DS_Store
+Thumbs.db
+
+*.log
+npm-debug.log*
