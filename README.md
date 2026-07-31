@@ -3,8 +3,8 @@
 Sponsors sign in, see their sponsorship and what we need from them, generate invoices,
 and pay by card, bank transfer, or wire. Deploys to **sponsor.colorstackatgsu.com**.
 
-**Status: step 1 of 10 complete.** The design system, routing, and page shells are in
-place and read from `src/data/mock.ts`. Nothing talks to a backend yet. Forms are
+**Status: steps 1 and 2 of 11 complete.** The design system, routing, and page shells are
+in place and read from `src/data/mock.ts`. Nothing talks to a backend yet. Forms are
 deliberately inert rather than faked.
 
 ```bash
@@ -13,6 +13,25 @@ npm run dev      # http://localhost:5173
 npm run build
 npm run lint
 ```
+
+## Architecture
+
+This repo is the **frontend only**. Server-side lives in `../cs-gsu_backend`.
+
+| Concern | Owner |
+|---|---|
+| Auth (invite, password, sessions, reset) | Supabase Auth |
+| Database, file storage | Supabase Postgres and Storage |
+| Business logic (invoices, Stripe, email, admin) | One Spring Boot service |
+| Static hosting | Vercel |
+
+`@supabase/supabase-js` is used in the browser for **authentication only**, to get and
+refresh a session. Every data read and write goes to the Spring API with the Supabase
+access token as a `Bearer` header. The frontend never queries tables directly.
+
+An earlier version of this plan put business logic in several Supabase Edge Functions.
+That was dropped: one testable service beats five scattered Deno files, particularly for
+invoice numbering and webhook idempotency, which want real tests around them.
 
 ## House style
 
@@ -135,15 +154,16 @@ same dependency.
 ## Build order
 
 1. **Scaffold that runs** (done)
-2. Design pass on the sponsor-facing shell
-3. Supabase local, schema, RLS negative tests
-4. Auth: invite, set password, password login, reset
-5. Invoices, no payment yet
-6. Stripe in test mode, card and ACH, webhook
-7. Email via Resend, invoice and receipt
-8. Admin pages
-9. Sponsor brand theming
-10. Production
+2. **Design pass, solid GSU blue backdrop** (done)
+3. Supabase local, schema, `app_api` role, RLS negative tests
+4. Spring Boot service: JWT validation and `GET /api/me`
+5. Frontend auth wired, `src/data/mock.ts` deleted
+6. Invoices via the API, no payment yet
+7. Stripe in test mode, card and ACH, idempotent webhook
+8. Email via Resend, invoice and receipt
+9. Admin pages
+10. Sponsor brand theming
+11. Production
 
-Member directory and resume book wait until `../cs-gsu_member_portal` is actually wired
-to Supabase. It is a scaffold today.
+Member directory and resume book wait until `../cs-gsu_member_portal` moves onto the same
+backend. It is a scaffold today.
