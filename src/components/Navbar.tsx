@@ -6,13 +6,13 @@ const LINKS = [
 ];
 
 /**
- * A plain bar with a hairline under it. The marketing site floats a white pill over
- * a dark hero, which only works when there is a hero to float over.
+ * The main site's floating white pill. The .topbar rule is its own width container,
+ * so there is no .wrap inside it: nesting one would indent the contents twice.
  */
 export default function Navbar({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <header className="topbar">
-      <div className="wrap topbar-inner">
+      <div className="topbar-inner">
         <Link to={signedIn ? '/dashboard' : '/login'} className="brand">
           <img src="/images/colorstack-gsu-logo.png" alt="" />
           <span className="brand-text">ColorStack at GSU</span>

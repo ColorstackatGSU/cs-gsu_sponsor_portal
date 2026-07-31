@@ -70,9 +70,11 @@
 
   html { width: 100%; overflow-x: hidden; }
 
+  /* The page is tinted, cards and the floating pill are pure white. Without the
+     tint a white pill floating on white has nothing to lift off. */
   body {
     font-family: var(--font);
-    background: var(--paper);
+    background: var(--surface-subtle);
     color: var(--ink);
     font-size: 15px;
     line-height: 1.5;
@@ -101,7 +103,7 @@
 
 /* ============ LAYOUT ============ */
 
-.shell { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+.shell { min-height: 100vh; display: flex; flex-direction: column; background: var(--surface-subtle); }
 
 /* The app is a reading column, not a full-bleed marketing page. */
 .wrap { width: 100%; max-width: 940px; margin: 0 auto; padding: 0 24px; }
@@ -115,15 +117,27 @@
 }
 
 /* ============ TOP BAR ============ */
-/* A plain bar with a hairline under it. The marketing site floats a white pill over
-   a dark hero, which needs a hero to float over. */
+/* The marketing site's floating white pill, kept. It sits on the tinted page rather
+   than on a dark hero, so it needs a hairline in addition to the shadow: a white pill
+   on a white page with only a shadow reads as a rendering artefact.
+
+   Sticky rather than absolute. The marketing site lets its bar scroll away, which is
+   right for a landing page and wrong for an app where the nav is the way out of a
+   long invoice list. */
 
 .topbar {
-  border-bottom: 1px solid var(--line);
-  background: var(--paper);
   position: sticky;
-  top: 0;
+  top: 14px;
   z-index: 40;
+  width: calc(100% - 32px);
+  max-width: 900px;
+  margin: 14px auto 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
 }
 
 .topbar-inner {
@@ -131,7 +145,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  height: 56px;
+  height: 46px;
+  padding: 0 8px 0 14px;
 }
 
 .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
@@ -386,9 +401,9 @@
 
 /* Tier and tasks sit side by side on a laptop and stack on a phone. Two equal
    columns rather than a sidebar: neither is subordinate to the other. */
-/* stretch, not start: two cards of different heights side by side look unfinished,
-   and the tier card is always shorter than the task list. */
-.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-top: 20px; }
+/* start, not stretch. Stretching the shorter card to match leaves a large empty
+   panel under the tier benefits, which reads worse than an uneven bottom edge. */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; margin-top: 20px; }
 
 @media (max-width: 760px) {
   .dash-grid { grid-template-columns: 1fr; }
