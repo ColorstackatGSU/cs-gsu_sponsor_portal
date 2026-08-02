@@ -101,94 +101,130 @@
   }
 }
 
-/* ============ LAYOUT ============ */
+/* ============ APP SHELL ============
+   Signed-in pages: sidebar left, content right. Auth pages: single centred column,
+   no sidebar. Both share the same tinted body so the transition between them is not
+   a colour flash.
 
-.shell { min-height: 100vh; display: flex; flex-direction: column; background: var(--surface-subtle); }
+   The signed-in body is pure white, not the tinted grey the auth pages sit on: with
+   a sidebar taking the place of the pill navbar, there is nothing to lift off, and
+   the flat white surface reads like a real application rather than a card floating
+   in space. */
 
-/* The app is a reading column, not a full-bleed marketing page. */
-.wrap { width: 100%; max-width: 940px; margin: 0 auto; padding: 0 24px; }
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+.shell-app { background: #ffffff; }
+.shell-auth { background: var(--surface-subtle); }
+
+/* Signed-in pages sit inside .side-main which already handles the outer padding, so
+   .wrap here only caps the reading width. Invoice tables get uncomfortable past 1000px. */
+.wrap { width: 100%; max-width: 1000px; margin: 0 auto; }
 .wrap-narrow { width: 100%; max-width: 420px; margin: 0 auto; padding: 0 24px; }
+.page {}
 
-.page { padding: 40px 0 80px; }
+/* ============ SIDEBAR ============
+   Copies the ColorStack layout: 224px column, brand wordmark up top, nav items
+   stacked, Sign Out pinned to the bottom. Active item is a filled GSU-blue pill with
+   white text. Rules that hold this together:
 
-@media (max-width: 640px) {
-  .wrap, .wrap-narrow { padding: 0 16px; }
-  .page { padding: 28px 0 56px; }
-}
+   - The sidebar is `position: fixed` on desktop so long invoice lists never push
+     the nav offscreen. On mobile it drops out of flow entirely and turns into a
+     slide-in drawer behind the top bar.
+   - Rows are 40px tall with 8px radius. Icons are 20px, stroke 1.75, so they read
+     against the label rather than dominating it. */
 
-/* ============ TOP BAR ============ */
-/* The marketing site's floating white pill, kept. It sits on the tinted page rather
-   than on a dark hero, so it needs a hairline in addition to the shadow: a white pill
-   on a white page with only a shadow reads as a rendering artefact.
+.side-wrap { display: flex; min-height: 100vh; }
+.side-main { flex: 1; min-width: 0; padding: 40px 40px 80px; margin-left: 224px; }
 
-   Sticky rather than absolute. The marketing site lets its bar scroll away, which is
-   right for a landing page and wrong for an app where the nav is the way out of a
-   long invoice list. */
-
-.topbar {
-  position: sticky;
-  top: 14px;
+.side {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 224px;
+  height: 100vh;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: #ffffff;
+  border-right: 1px solid var(--line);
   z-index: 40;
-  width: calc(100% - 32px);
-  max-width: 900px;
-  margin: 14px auto 0;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
 }
 
-.topbar-inner {
+.side-brand { display: flex; align-items: center; gap: 8px; padding: 0 8px; }
+.side-brand img { width: 24px; height: 24px; border-radius: 50%; display: block; }
+.side-brand-text { font-weight: 600; font-size: 15px; color: var(--ink); }
+
+.side-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; }
+.side-foot { display: flex; flex-direction: column; gap: 2px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+.side-link {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  height: 46px;
-  padding: 0 8px 0 14px;
-}
-
-.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.brand img { width: 26px; height: 26px; border-radius: 50%; display: block; flex-shrink: 0; }
-.brand-text { font-weight: 600; font-size: 14.5px; white-space: nowrap; }
-
-.nav { display: flex; align-items: center; gap: 2px; }
-
-.nav-link {
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--ink-muted);
-  white-space: nowrap;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14.5px;
+  color: var(--ink);
   transition: background 0.12s, color 0.12s;
 }
-.nav-link:hover { background: var(--surface-hover); color: var(--ink); }
-.nav-link.active { color: var(--brand); font-weight: 500; }
+.side-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+.side-link:hover { background: var(--surface-hover); }
+.side-link.active { background: var(--brand); color: var(--brand-ink); }
+.side-link.active:hover { background: var(--brand-hover); }
 
-@media (max-width: 560px) {
-  .brand-text { display: none; }
-  .nav-link { padding: 6px 8px; font-size: 13.5px; }
+/* Mobile: sidebar becomes a top bar with a hamburger, and the drawer slides in from
+   the left. Overflow scrim below covers the content and dismisses on click. */
+.side-top { display: none; }
+.scrim { display: none; }
+
+@media (max-width: 900px) {
+  .side-wrap { display: block; }
+  .side-main { margin-left: 0; padding: 24px 16px 56px; }
+
+  .side-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  .side-top-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .side-top-brand img { width: 24px; height: 24px; border-radius: 50%; display: block; }
+
+  .side-burger {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink);
+  }
+  .side-burger:hover { background: var(--surface-hover); }
+
+  .side {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+  .side.open { transform: translateX(0); }
+
+  .scrim {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(17, 24, 39, 0.4);
+    z-index: 35;
+  }
+  .scrim.open { display: block; }
 }
 
-/* ============ FOOTER ============ */
+/* ============ AUTH SURFACE ============
+   Signed-out pages centre a card over a faintly tiled chapter mark. The mark is a
+   filled circle, so it is tiled small, sparse, and masked out towards the middle:
+   tiled tightly it reads as a grey block field rather than as texture. */
 
-.foot {
-  border-top: 1px solid var(--line);
-  padding: 20px 0;
-  font-size: 13px;
-  color: var(--ink-faint);
-}
-.foot-inner { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; }
-.foot a { color: var(--ink-muted); }
-.foot a:hover { color: var(--ink); text-decoration: underline; }
-
-/* ============ AUTH ============ */
-/* Centred card on a tiled mark, the one flourish this design keeps. The tile is the
-   chapter logo at 5 percent, so it reads as texture and never competes with the
-   card. */
-
-.auth {
+.auth-wrap {
   flex: 1;
   display: flex;
   align-items: center;
@@ -196,25 +232,30 @@
   padding: 48px 0;
   position: relative;
 }
-
-/* The mark is a filled circle, so tiling it tightly reads as a grey block field
-   rather than as texture. Small mark, wide cell, and faded out towards the middle so
-   the card always sits on clean white. */
-.auth::before {
+.auth-wrap::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: url('/images/colorstack-gsu-logo.png');
   background-size: 18px 18px;
-  background-position: 0 0;
   background-repeat: space;
   opacity: 0.07;
   pointer-events: none;
   mask-image: radial-gradient(ellipse 55% 60% at 50% 50%, transparent 30%, #000 100%);
   -webkit-mask-image: radial-gradient(ellipse 55% 60% at 50% 50%, transparent 30%, #000 100%);
 }
+.auth-wrap > * { position: relative; z-index: 1; }
 
-.auth > * { position: relative; z-index: 1; }
+/* Footer sits under the auth card, carrying the support address. On signed-in pages
+   there is no footer at all: the sidebar carries the identity. */
+.auth-foot {
+  padding: 20px 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.auth-foot a { color: var(--ink-muted); }
+.auth-foot a:hover { color: var(--ink); text-decoration: underline; }
 
 @layer components {
   /* ============ CARD ============ */
@@ -373,8 +414,9 @@
   .table th:last-child, .table td:last-child { padding-right: 0; text-align: right; }
   .table tbody tr:hover { background: var(--surface-subtle); }
 
-  /* Invoice numbers, amounts and dates. Tabular figures so columns line up. */
-  .num { font-variant-numeric: tabular-nums; }
+  /* Invoice numbers, amounts and dates. Tabular figures so columns line up, and
+     never break in the middle: CSGSU-2026-\n0042 is worse than an overflowing row. */
+  .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   .link { color: var(--brand); }
   .link:hover { text-decoration: underline; }
@@ -462,13 +504,13 @@
 @media print {
   @page { margin: 16mm; }
 
-  /* .topbar, not a bare `header`: the invoice has its own <header> holding the logo,
-     the invoice number and the dates, and a blanket rule prints an invoice with no
-     letterhead and no number on it. */
-  .topbar, .foot, .no-print, .note-preview { display: none !important; }
+  /* .side/.side-top, not a bare `header` or `nav`: the invoice has its own <header>
+     holding the logo, the invoice number and the dates, and a blanket rule prints an
+     invoice with no letterhead and no number on it. */
+  .side, .side-top, .scrim, .auth-foot, .no-print, .note-preview { display: none !important; }
 
-  .page { padding: 0 !important; }
-  .wrap { max-width: none !important; padding: 0 !important; }
+  .side-main { margin-left: 0 !important; padding: 0 !important; }
+  .side-wrap { display: block !important; }
 
   .card { border: none !important; padding: 0 !important; border-radius: 0 !important; }
 
