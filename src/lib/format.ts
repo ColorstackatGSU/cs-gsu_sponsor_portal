@@ -1,4 +1,4 @@
-import type { Invoice, InvoiceStatus } from '../data/types';
+import type { InvoiceStatus } from '../data/types';
 
 /** Zeffy invoice UUID → the public URL the sponsor pays on. */
 export function zeffyInvoiceUrl(zeffyInvoiceId: string): string {
@@ -51,8 +51,14 @@ export function daysUntil(iso: string | null): number | null {
  * The status a sponsor should actually see, which is not always the stored one.
  * "Overdue" is not a column: it is an issued invoice whose due date has passed,
  * derived at read time so it can never go stale in the database.
+ *
+ * Structurally typed on just the two fields it needs so the API's ApiInvoice
+ * and the mock Invoice can both pass through without a wrapper.
  */
-export function displayStatus(invoice: Invoice): InvoiceStatus | 'overdue' {
+export function displayStatus(invoice: {
+  status: InvoiceStatus;
+  dueAt: string | null;
+}): InvoiceStatus | 'overdue' {
   if (invoice.status === 'issued') {
     const days = daysUntil(invoice.dueAt);
     if (days !== null && days < 0) return 'overdue';

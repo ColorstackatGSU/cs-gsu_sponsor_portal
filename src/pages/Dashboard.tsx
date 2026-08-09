@@ -1,30 +1,24 @@
 import { Link } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
-import { MOCK_INVOICES, MOCK_TASKS, MOCK_TIERS } from '../data/mock';
+import { MOCK_TIERS } from '../data/mock';
 import { displayStatus, formatDate, formatMoney, daysUntil, zeffyInvoiceUrl } from '../lib/format';
 import { useMe } from '../hooks/useMe';
+import { useInvoices, type ApiInvoice } from '../hooks/useInvoices';
+import { useTasks } from '../hooks/useTasks';
 import { ORG } from '../data/org';
 
 /**
- * Header (sponsor name + signed-in-as) reads from /me on the API. Invoices and
- * tasks stay on mock data until step 6 adds those endpoints.
- *
- * The page answers three questions in the order a sponsor cares about them: do I
- * owe you anything, what am I getting, and what do you need from me.
+ * All data comes from the API. Tier benefits still resolve against MOCK_TIERS
+ * because there is no /tiers endpoint yet; the API returns tierName on the
+ * sponsor, we look up the mock tier by name to render its benefits list. When
+ * step 9 adds admin tier management, /tiers ships and this lookup drops.
  */
 export default function Dashboard() {
   const me = useMe();
+  const invoiceList = useInvoices();
+  const taskList = useTasks();
 
-  // Anything that comes off the API waits for that fetch; mock data does not.
-  if (me.status === 'loading') {
-    return (
-      <div className="page">
-        <div className="wrap">
-          <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
-        </div>
-      </div>
-    );
-  }
+  if (me.status === 'loading') return <Loading />;
 
   if (me.status === 'unlinked') {
     return (
@@ -42,23 +36,22 @@ export default function Dashboard() {
   }
 
   if (me.status === 'error') {
-    return (
-      <div className="page">
-        <div className="wrap">
-          <div className="note note-error">Couldn't load your account: {me.message}</div>
-        </div>
-      </div>
-    );
+    return <ErrorPage message={me.message} />;
   }
 
   const { contact, sponsor } = me.me;
-  // Look up the tier by name from mock (for the benefits list). The API returns
-  // tierName as a string, which matches the mock's `name` field. Once step 6 adds
-  // /tiers to the API we drop the mock lookup entirely.
   const tier = sponsor.tierName ? MOCK_TIERS.find((t) => t.name === sponsor.tierName) : undefined;
-  const openInvoice = MOCK_INVOICES.find((i) => i.status === 'issued' || i.status === 'processing');
-  const openTasks = MOCK_TASKS.filter((t) => t.status === 'todo');
-  const recent = MOCK_INVOICES.slice(0, 3);
+
+  // Derive invoice-list-dependent state from whatever came back. Loading and
+  // error are non-blocking for the dashboard header; we render as much as we can.
+  const invoices: ApiInvoice[] = invoiceList.status === 'ready' ? invoiceList.invoices : [];
+  const openInvoice = invoices.find(
+    (i) => i.status === 'issued' || i.status === 'processing',
+  );
+  const recent = invoices.slice(0, 3);
+
+  const tasks = taskList.status === 'ready' ? taskList.tasks : [];
+  const openTasks = tasks.filter((t) => t.status === 'todo');
 
   return (
     <div className="page">
@@ -121,7 +114,11 @@ export default function Dashboard() {
               {openTasks.length > 0 && <span className="faint" style={{ fontSize: 13 }}>{openTasks.length} open</span>}
             </div>
 
-            {openTasks.length === 0 ? (
+            {taskList.status === 'loading' ? (
+              <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
+            ) : taskList.status === 'error' ? (
+              <p className="muted" style={{ fontSize: 14 }}>Couldn't load tasks: {taskList.message}</p>
+            ) : openTasks.length === 0 ? (
               <p className="muted" style={{ fontSize: 14 }}>
                 Nothing outstanding. We'll let you know when something comes up.
               </p>
@@ -162,27 +159,53 @@ export default function Dashboard() {
             <Link to="/invoices" className="link" style={{ fontSize: 13.5 }}>View all</Link>
           </div>
 
-          <div className="rows">
-            {recent.map((inv) => (
-              <Link key={inv.id} to={`/invoices/${inv.id}`} className="row">
-                <span>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>{inv.title}</span>
-                  <span className="faint" style={{ display: 'block', fontSize: 12.5 }}>
-                    Issued {formatDate(inv.issuedAt)}
+          {invoiceList.status === 'loading' ? (
+            <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
+          ) : invoiceList.status === 'error' ? (
+            <p className="muted" style={{ fontSize: 14 }}>Couldn't load invoices: {invoiceList.message}</p>
+          ) : recent.length === 0 ? (
+            <p className="muted" style={{ fontSize: 14 }}>No invoices yet.</p>
+          ) : (
+            <div className="rows">
+              {recent.map((inv) => (
+                <Link key={inv.id} to={`/invoices/${inv.id}`} className="row">
+                  <span>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{inv.title}</span>
+                    <span className="faint" style={{ display: 'block', fontSize: 12.5 }}>
+                      Issued {formatDate(inv.issuedAt)}
+                    </span>
                   </span>
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{formatMoney(inv.amountCents)}</span>
-                  <span style={{ minWidth: 132, display: 'flex', justifyContent: 'flex-end' }}>
-                    <StatusPill status={displayStatus(inv)} />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{formatMoney(inv.amountCents)}</span>
+                    <span style={{ minWidth: 132, display: 'flex', justifyContent: 'flex-end' }}>
+                      <StatusPill status={displayStatus(inv)} />
+                    </span>
                   </span>
-                </span>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <p className="note-preview" style={{ marginTop: 20 }}>Sample data. Not wired to the API yet.</p>
+function Loading() {
+  return (
+    <div className="page">
+      <div className="wrap">
+        <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
+      </div>
+    </div>
+  );
+}
+
+function ErrorPage({ message }: { message: string }) {
+  return (
+    <div className="page">
+      <div className="wrap">
+        <div className="note note-error">Couldn't load your account: {message}</div>
       </div>
     </div>
   );
@@ -192,12 +215,12 @@ export default function Dashboard() {
  * The amount-due strip. Says one thing and offers one action.
  *
  * ACH gets its own copy: money that has left the sponsor's account but has not
- * settled is neither unpaid nor paid, and telling a company that already paid you
- * that they still owe you is the fastest way to lose them.
+ * settled is neither unpaid nor paid, and telling a company that already paid
+ * you that they still owe you is the fastest way to lose them.
  *
- * Pay button opens Zeffy in a new tab if a Zeffy invoice is linked; otherwise it
- * falls back to our detail page so the sponsor at least lands somewhere. The
- * processing case always shows View invoice, because there is no action to take.
+ * Pay button opens Zeffy in a new tab if a Zeffy invoice is linked; otherwise
+ * it falls back to our detail page so the sponsor at least lands somewhere.
+ * The processing case always shows View invoice, because there is no action.
  */
 function Outstanding({
   id,
