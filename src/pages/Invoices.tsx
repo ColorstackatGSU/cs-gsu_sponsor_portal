@@ -9,6 +9,11 @@ import { displayStatus, formatDate, formatMoney } from '../lib/format';
  * Rendered twice, a table above 700px and a row list below it, with exactly one
  * shown. A table forced onto a phone either scrolls sideways or crushes the amount
  * column, and the amount is the column that matters.
+ *
+ * The "Invoice" column shows the human title we chose at issue time (e.g. "Signature
+ * Partner sponsorship 2026-2027"), not a formal invoice number. Zeffy owns the
+ * number that appears on the actual invoice document; sponsors see it when they
+ * open the Zeffy invoice.
  */
 export default function Invoices() {
   return (
@@ -39,8 +44,8 @@ export default function Invoices() {
                   {MOCK_INVOICES.map((inv) => (
                     <tr key={inv.id}>
                       <td>
-                        <Link to={`/invoices/${inv.invoiceNumber}`} className="link num" style={{ fontWeight: 500 }}>
-                          {inv.invoiceNumber}
+                        <Link to={`/invoices/${inv.id}`} className="link" style={{ fontWeight: 500 }}>
+                          {inv.title}
                         </Link>
                       </td>
                       <td className="muted">{findTier(inv.tierId)?.name ?? '-'}</td>
@@ -55,9 +60,9 @@ export default function Invoices() {
 
               <div className="only-narrow rows">
                 {MOCK_INVOICES.map((inv) => (
-                  <Link key={inv.id} to={`/invoices/${inv.invoiceNumber}`} className="row">
+                  <Link key={inv.id} to={`/invoices/${inv.id}`} className="row">
                     <span>
-                      <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{inv.invoiceNumber}</span>
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>{inv.title}</span>
                       <span className="faint num" style={{ display: 'block', fontSize: 12.5 }}>
                         Due {formatDate(inv.dueAt)}
                       </span>

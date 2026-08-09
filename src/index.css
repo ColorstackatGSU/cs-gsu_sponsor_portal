@@ -461,63 +461,36 @@
   .only-narrow { display: block; }
 }
 
-/* ============ INVOICE DOCUMENT ============ */
-
-.doc-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 28px;
-  flex-wrap: wrap;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--line);
+/* ============ INVOICE SUMMARY ============
+   The detail page shows a compact grid of metadata (amount, tier, billed-to,
+   issued) rather than a full invoice document. Zeffy owns the real invoice, so we
+   would just be duplicating it if we rendered a printable copy here. */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 }
-.doc-meta { text-align: right; min-width: 190px; }
 
-.doc-dates { display: grid; grid-template-columns: auto auto; justify-content: end; gap: 3px 14px; margin: 12px 0 0; font-size: 13.5px; }
-.doc-dates dt { color: var(--ink-muted); }
-.doc-dates dd { margin: 0; }
-
-.doc-parties { padding: 20px 0; border-bottom: 1px solid var(--line); }
-.doc-lines { margin-top: 20px; }
-.doc-lines tfoot td { padding-top: 14px; border-bottom: none; border-top: 2px solid var(--ink); }
-.doc-remit { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
-
-.remit { display: grid; grid-template-columns: auto 1fr; gap: 7px 20px; margin: 12px 0 0; font-size: 13.5px; }
-.remit dt { color: var(--ink-muted); }
-.remit dd { margin: 0; }
-
-.doc-foot { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-faint); }
-
-@media (max-width: 600px) {
-  .doc-meta { text-align: left; min-width: 0; }
-  .doc-dates { justify-content: start; }
-  .remit { grid-template-columns: 1fr; gap: 1px; }
-  .remit dd { margin-bottom: 10px; }
+@media (max-width: 720px) {
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ============ PRINT ============
-   The invoice page is the invoice. A sponsor's AP department prints it to PDF and
-   files it. There is deliberately no second PDF renderer that could drift out of
-   sync with what is shown on screen.
-
-   Now that the app is light, print mostly just strips the chrome. */
+   No printable invoice on our side anymore. Print strips the app chrome and lets
+   the summary card render on white paper, which is useful if a sponsor really
+   wants a hard copy of what we have on file (they should print the Zeffy invoice
+   for the payment record). */
 @media print {
   @page { margin: 16mm; }
 
-  /* .side/.side-top, not a bare `header` or `nav`: the invoice has its own <header>
-     holding the logo, the invoice number and the dates, and a blanket rule prints an
-     invoice with no letterhead and no number on it. */
   .side, .side-top, .scrim, .auth-foot, .no-print, .note-preview { display: none !important; }
 
   .side-main { margin-left: 0 !important; padding: 0 !important; }
   .side-wrap { display: block !important; }
 
-  .card { border: none !important; padding: 0 !important; border-radius: 0 !important; }
+  .card { border: 1px solid #ccc !important; box-shadow: none !important; }
 
   /* Grey secondary text is fine on screen and washes out on paper. */
-  .muted, .faint, .doc-dates dt, .remit dt, .table th { color: #444 !important; }
-  .doc-foot { color: #666 !important; }
-
-  /* Never split the payment instructions or a line item across two sheets. */
-  .doc-remit, .doc-lines { break-inside: avoid; }
+  .muted, .faint, .table th { color: #444 !important; }
+  .card { break-inside: avoid; }
 }

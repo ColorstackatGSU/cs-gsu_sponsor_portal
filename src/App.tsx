@@ -16,7 +16,7 @@ export default function App() {
         <Route path="activate" element={<Activate />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="invoices" element={<Invoices />} />
-        <Route path="invoices/:invoiceNumber" element={<InvoiceDetail />} />
+        <Route path="invoices/:id" element={<InvoiceDetail />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

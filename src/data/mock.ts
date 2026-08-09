@@ -61,62 +61,71 @@ export const MOCK_TIERS: Tier[] = [
 
 export const MOCK_SPONSOR: Sponsor = {
   id: 'sponsor-1',
-  name: 'Northwind Technologies',
-  slug: 'northwind',
+  name: 'John Doe Corporations',
+  slug: 'john-doe',
   logoUrl: null,
-  brandHex: null,
+  brandHex: '#059669',
   tierId: 'tier-signature',
-  websiteUrl: 'https://example.com',
+  websiteUrl: 'https://johndoe.example',
 };
 
 export const MOCK_CONTACT: SponsorContact = {
   id: 'contact-1',
   sponsorId: 'sponsor-1',
-  email: 'partnerships@example.com',
-  fullName: 'Jordan Avery',
-  title: 'University Recruiting Lead',
+  email: 'jane.doe@johndoe.example',
+  fullName: 'Jane Doe',
+  title: 'Chief Recruiting Officer',
   role: 'primary',
 };
+
+/** The one real Zeffy invoice the chapter has created so far. Wired to the mock
+    "issued" invoice below so clicking Pay in dev actually opens a real Zeffy page
+    (do not pay it in dev unless you want to test refunds). The two paid invoices
+    below use placeholder UUIDs since they never had real Zeffy counterparts. */
+const REAL_ZEFFY_INVOICE = '2bd0f46e-9afe-48c3-8cb4-5054fc134349';
 
 export const MOCK_INVOICES: Invoice[] = [
   {
     id: 'inv-3',
     sponsorId: 'sponsor-1',
-    invoiceNumber: 'CSGSU-2026-0042',
     tierId: 'tier-signature',
     amountCents: 150_000,
+    title: 'Signature Partner sponsorship, 2026-2027',
     status: 'issued',
     issuedAt: '2026-07-15',
     dueAt: '2026-08-14',
     paidAt: null,
     paymentMethod: null,
+    zeffyInvoiceId: REAL_ZEFFY_INVOICE,
     notes: null,
   },
   {
     id: 'inv-2',
     sponsorId: 'sponsor-1',
-    invoiceNumber: 'CSGSU-2025-0031',
     tierId: 'tier-community',
     amountCents: 100_000,
+    title: 'Community Partner sponsorship, 2025-2026',
     status: 'paid',
     issuedAt: '2025-08-02',
     dueAt: '2025-09-01',
     paidAt: '2025-08-19',
     paymentMethod: 'ach',
+    zeffyInvoiceId: '00000000-1111-2222-3333-000000000002',
     notes: null,
   },
   {
     id: 'inv-1',
     sponsorId: 'sponsor-1',
-    invoiceNumber: 'CSGSU-2025-0008',
     tierId: 'tier-supporting',
     amountCents: 50_000,
+    title: 'Supporting Partner sponsorship, 2024-2025',
     status: 'paid',
     issuedAt: '2025-01-20',
     dueAt: '2025-02-19',
     paidAt: '2025-02-03',
     paymentMethod: 'wire',
-    notes: 'Wire received, confirmed by treasurer.',
+    zeffyInvoiceId: '00000000-1111-2222-3333-000000000001',
+    notes: 'Wire received, confirmed by treasurer. Zeffy invoice marked paid manually.',
   },
 ];
 
@@ -125,7 +134,7 @@ export const MOCK_TASKS: Task[] = [
     id: 'task-1',
     sponsorId: 'sponsor-1',
     title: 'Pay the fall sponsorship invoice',
-    description: 'Invoice CSGSU-2026-0042 is due August 14.',
+    description: 'Your Signature Partner invoice is due August 14.',
     dueAt: '2026-08-14',
     status: 'todo',
   },
@@ -159,6 +168,6 @@ export function findTier(tierId: string | null): Tier | undefined {
   return MOCK_TIERS.find((t) => t.id === tierId);
 }
 
-export function findInvoice(invoiceNumber: string): Invoice | undefined {
-  return MOCK_INVOICES.find((i) => i.invoiceNumber === invoiceNumber);
+export function findInvoice(id: string): Invoice | undefined {
+  return MOCK_INVOICES.find((i) => i.id === id);
 }

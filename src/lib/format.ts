@@ -1,5 +1,10 @@
 import type { Invoice, InvoiceStatus } from '../data/types';
 
+/** Zeffy invoice UUID → the public URL the sponsor pays on. */
+export function zeffyInvoiceUrl(zeffyInvoiceId: string): string {
+  return `https://www.zeffy.com/en-US/invoice/${zeffyInvoiceId}`;
+}
+
 /**
  * Cents to "$5,000.00". Every dollar amount in the UI goes through here, so there
  * is exactly one place where money formatting can be wrong.

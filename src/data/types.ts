@@ -43,15 +43,21 @@ export interface SponsorContact {
 export interface Invoice {
   id: string;
   sponsorId: string;
-  /** CSGSU-2026-0001. Allocated server-side, never generated in the browser. */
-  invoiceNumber: string;
   tierId: string;
+  /** Snapshot at issue time. Zeffy owns the authoritative amount on the invoice
+      itself; this copy exists so the dashboard renders without an API round-trip. */
   amountCents: number;
   status: InvoiceStatus;
   issuedAt: string | null;
   dueAt: string | null;
   paidAt: string | null;
   paymentMethod: PaymentMethod | null;
+  /** UUID of the Zeffy invoice, set at link time. Null while status is 'draft'.
+      URL is derived: `https://www.zeffy.com/en-US/invoice/<uuid>`. */
+  zeffyInvoiceId: string | null;
+  /** Free-form title we chose at issue time, e.g. "Signature Partner sponsorship
+      2026-2027." Shown on our dashboard cards; Zeffy has its own description. */
+  title: string;
   notes: string | null;
 }
 

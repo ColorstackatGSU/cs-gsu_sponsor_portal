@@ -1,20 +1,22 @@
 import { Link, useParams } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
-import { MOCK_SPONSOR, MOCK_CONTACT, findInvoice, findTier } from '../data/mock';
-import { ORG, REMITTANCE, REMITTANCE_READY } from '../data/org';
-import { displayStatus, formatDate, formatMoney } from '../lib/format';
+import { MOCK_SPONSOR, findInvoice, findTier } from '../data/mock';
+import { displayStatus, formatDate, formatMoney, daysUntil, zeffyInvoiceUrl } from '../lib/format';
 
 /**
- * Shell only: reads from src/data/mock.ts.
+ * Thin summary page. Zeffy owns the actual invoice document (numbering, billed-to,
+ * line items, printable layout, receipt) at a public URL like
+ * `zeffy.com/en-US/invoice/<uuid>`. Our detail page shows the metadata we care
+ * about internally (tier, amount, dates, tier benefits) and hands the sponsor over
+ * to Zeffy for the payment itself.
  *
- * This page IS the invoice, not a preview of one. The sponsor's AP department prints
- * it to PDF and files it, and the @media print block in index.css strips the app
- * chrome around it. There is deliberately no second PDF renderer that could drift out
- * of sync with what is shown on screen.
+ * Deliberately no letterhead, no line items, no "how to pay" copy. Duplicating
+ * Zeffy's invoice on our side means two documents to keep in sync, and Zeffy's is
+ * the one that matters. We link and get out of the way.
  */
 export default function InvoiceDetail() {
-  const { invoiceNumber } = useParams<{ invoiceNumber: string }>();
-  const invoice = invoiceNumber ? findInvoice(invoiceNumber) : undefined;
+  const { id } = useParams<{ id: string }>();
+  const invoice = id ? findInvoice(id) : undefined;
 
   if (!invoice) {
     return (
@@ -22,7 +24,7 @@ export default function InvoiceDetail() {
         <div className="wrap-narrow" style={{ textAlign: 'center' }}>
           <h1>Invoice not found</h1>
           <p className="muted" style={{ fontSize: 14, marginTop: 8 }}>
-            We could not find an invoice numbered {invoiceNumber}.
+            We could not find an invoice with that id.
           </p>
           <Link to="/invoices" className="btn btn-secondary" style={{ marginTop: 20 }}>Back to invoices</Link>
         </div>
@@ -33,162 +35,150 @@ export default function InvoiceDetail() {
   const tier = findTier(invoice.tierId);
   const status = displayStatus(invoice);
   const payable = status === 'issued' || status === 'overdue';
+  const days = daysUntil(invoice.dueAt);
+  const late = payable && days !== null && days < 0;
 
   return (
     <div className="page">
       <div className="wrap">
-        {/* ===== APP CHROME (hidden when printed) ===== */}
-        <div className="no-print">
-          <Link to="/invoices" className="link" style={{ fontSize: 13.5 }}>&larr; All invoices</Link>
+        <Link to="/invoices" className="link" style={{ fontSize: 13.5 }}>&larr; All invoices</Link>
 
-          <div
-            style={{
-              marginTop: 12,
-              marginBottom: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 16,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <h1 className="num">{invoice.invoiceNumber}</h1>
+        {/* Header: title, status, and the primary action */}
+        <div
+          style={{
+            marginTop: 12,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <h1 style={{ marginBottom: 8 }}>{invoice.title}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <StatusPill status={status} />
-            </div>
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                Print or save PDF
-              </button>
-              {payable && <button type="button" className="btn btn-primary btn-sm" disabled>Pay now</button>}
+              {invoice.dueAt && payable && (
+                <span
+                  className="num"
+                  style={{ fontSize: 13, color: late ? 'var(--bad)' : 'var(--ink-muted)' }}
+                >
+                  {late ? 'Was due' : 'Due'} {formatDate(invoice.dueAt)}
+                  {!late && days !== null && days <= 30 && ` (${days} days)`}
+                </span>
+              )}
+              {invoice.paidAt && (
+                <span className="num" style={{ fontSize: 13, color: 'var(--ink-muted)' }}>
+                  Paid {formatDate(invoice.paidAt)}
+                </span>
+              )}
             </div>
           </div>
+
+          {payable && invoice.zeffyInvoiceId && (
+            <a
+              href={zeffyInvoiceUrl(invoice.zeffyInvoiceId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary"
+            >
+              View &amp; pay on Zeffy &#x2197;
+            </a>
+          )}
         </div>
 
-        {/* ===== THE DOCUMENT ===== */}
-        <article className="card">
-          <header className="doc-head">
+        {/* Summary card: the numbers */}
+        <div className="card">
+          <div className="summary-grid">
             <div>
-              <img src="/images/colorstack-gsu-logo.png" alt="" width={36} height={36} style={{ borderRadius: '50%', display: 'block' }} />
-              <p style={{ margin: '10px 0 0', fontWeight: 600 }}>{ORG.legalName}</p>
-              {ORG.addressLines.map((line) => (
-                <p key={line} className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>{line}</p>
+              <p className="label" style={{ marginBottom: 4 }}>Amount</p>
+              <p className="num" style={{ margin: 0, fontSize: 26, fontWeight: 600 }}>
+                {formatMoney(invoice.amountCents)}
+              </p>
+            </div>
+            <div>
+              <p className="label" style={{ marginBottom: 4 }}>Tier</p>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>{tier?.name ?? '-'}</p>
+            </div>
+            <div>
+              <p className="label" style={{ marginBottom: 4 }}>Billed to</p>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>{MOCK_SPONSOR.name}</p>
+            </div>
+            <div>
+              <p className="label" style={{ marginBottom: 4 }}>Issued</p>
+              <p className="num" style={{ margin: 0, fontSize: 15 }}>
+                {formatDate(invoice.issuedAt) || 'Not issued'}
+              </p>
+            </div>
+          </div>
+
+          {invoice.notes && (
+            <p className="muted" style={{ marginTop: 16, marginBottom: 0, fontSize: 13.5 }}>
+              {invoice.notes}
+            </p>
+          )}
+        </div>
+
+        {/* Tier benefits: helps the sponsor remember what they're getting */}
+        {tier && (
+          <div className="card" style={{ marginTop: 16 }}>
+            <p className="card-title" style={{ marginBottom: 10 }}>
+              What's included at {tier.name}
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {tier.benefits.map((b) => (
+                <li
+                  key={b}
+                  style={{ display: 'flex', gap: 8, padding: '6px 0', fontSize: 14, color: 'var(--ink-muted)' }}
+                >
+                  <span aria-hidden="true" style={{ color: 'var(--brand)' }}>&#8226;</span>
+                  {b}
+                </li>
               ))}
-              <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>{ORG.billingEmail}</p>
-              {ORG.ein && <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>EIN {ORG.ein}</p>}
-            </div>
-
-            <div className="doc-meta">
-              <p className="muted" style={{ margin: 0, fontSize: 13 }}>Invoice</p>
-              <p className="num" style={{ margin: '2px 0 0', fontSize: 17, fontWeight: 600 }}>{invoice.invoiceNumber}</p>
-              <dl className="doc-dates">
-                <dt>Issued</dt>
-                <dd className="num">{formatDate(invoice.issuedAt) || 'Not yet issued'}</dd>
-                <dt>Due</dt>
-                <dd className="num">{formatDate(invoice.dueAt) || '-'}</dd>
-                {invoice.paidAt && (
-                  <>
-                    <dt>Paid</dt>
-                    <dd className="num">{formatDate(invoice.paidAt)}</dd>
-                  </>
-                )}
-              </dl>
-            </div>
-          </header>
-
-          <div className="doc-parties">
-            <p className="muted" style={{ margin: 0, fontSize: 13 }}>Billed to</p>
-            <p style={{ margin: '4px 0 0', fontWeight: 600 }}>{MOCK_SPONSOR.name}</p>
-            <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>{MOCK_CONTACT.fullName}</p>
-            <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>{MOCK_CONTACT.email}</p>
+            </ul>
           </div>
+        )}
 
-          <table className="table doc-lines">
-            <thead>
-              <tr>
-                <th scope="col">Description</th>
-                <th scope="col">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <p style={{ margin: 0, fontWeight: 500 }}>{tier?.name ?? 'Sponsorship'} sponsorship</p>
-                  <p className="muted" style={{ margin: '2px 0 0', fontSize: 13.5 }}>
-                    Annual partnership with {ORG.displayName}
-                  </p>
-                </td>
-                <td className="num" style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  {formatMoney(invoice.amountCents)}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td style={{ fontWeight: 600 }}>Total due</td>
-                <td className="num" style={{ fontSize: 19, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  {formatMoney(invoice.amountCents)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-
-          <div className="doc-remit">
-            <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>How to pay</p>
-
-            {payable ? (
-              <>
-                <p className="muted" style={{ margin: '6px 0 0', fontSize: 13.5 }}>
-                  Pay by card or bank transfer from this page, or send a wire or check using the
-                  details below. Reference <strong className="num">{invoice.invoiceNumber}</strong> on any
-                  transfer so we can match it to your account.
-                </p>
-
-                {REMITTANCE_READY ? (
-                  <dl className="remit">
-                    <dt>Bank</dt><dd>{REMITTANCE.bankName}</dd>
-                    <dt>Account name</dt><dd>{REMITTANCE.accountName}</dd>
-                    <dt>Routing (ABA)</dt><dd className="num">{REMITTANCE.routingNumber}</dd>
-                    <dt>Account number</dt><dd className="num">{REMITTANCE.accountNumber}</dd>
-                    {REMITTANCE.swift && (<><dt>SWIFT</dt><dd className="num">{REMITTANCE.swift}</dd></>)}
-                    <dt>Checks payable to</dt><dd>{REMITTANCE.checkPayableTo}</dd>
-                  </dl>
-                ) : (
-                  // Never print a placeholder account number. A sponsor might try to
-                  // pay against it.
-                  <div className="note note-warn" style={{ marginTop: 12 }}>
-                    Bank details are not configured yet. Email{' '}
-                    <a className="link" href={`mailto:${ORG.billingEmail}`}>{ORG.billingEmail}</a>{' '}
-                    for wire or check instructions.
-                  </div>
-                )}
-              </>
-            ) : status === 'processing' ? (
-              <p className="muted" style={{ margin: '6px 0 0', fontSize: 13.5 }}>
-                Your bank transfer is clearing. Bank payments take 3 to 5 business days to settle,
-                and we'll email a receipt as soon as it lands. Nothing further is needed from you.
-              </p>
-            ) : status === 'paid' ? (
-              <p className="muted" style={{ margin: '6px 0 0', fontSize: 13.5 }}>
-                Paid in full on {formatDate(invoice.paidAt)}
-                {invoice.paymentMethod ? ` by ${methodLabel(invoice.paymentMethod)}` : ''}. Thank you for
-                supporting our chapter.
-              </p>
-            ) : (
-              <p className="muted" style={{ margin: '6px 0 0', fontSize: 13.5 }}>
-                This invoice has been voided and is not payable.
-              </p>
-            )}
-
-            {invoice.notes && <p className="faint" style={{ margin: '12px 0 0', fontSize: 13 }}>{invoice.notes}</p>}
+        {/* Payment details, only once settled */}
+        {status === 'paid' && (
+          <div className="card" style={{ marginTop: 16 }}>
+            <p className="card-title" style={{ marginBottom: 10 }}>Payment</p>
+            <p style={{ margin: 0, fontSize: 14 }}>
+              Paid in full on {formatDate(invoice.paidAt)}
+              {invoice.paymentMethod ? ` by ${methodLabel(invoice.paymentMethod)}` : ''}.
+              {invoice.zeffyInvoiceId && (
+                <>
+                  {' '}
+                  <a
+                    className="link"
+                    href={zeffyInvoiceUrl(invoice.zeffyInvoiceId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View receipt on Zeffy &#x2197;
+                  </a>
+                </>
+              )}
+            </p>
           </div>
+        )}
 
-          <footer className="doc-foot">Questions about this invoice? Email {ORG.billingEmail}</footer>
-        </article>
+        {status === 'processing' && (
+          <div className="note note-info" style={{ marginTop: 16 }}>
+            Your bank transfer is clearing. Bank payments take 3 to 5 business days to settle, and
+            we'll email a receipt as soon as it lands. Nothing further is needed from you.
+          </div>
+        )}
 
-        <p className="note-preview no-print" style={{ marginTop: 20 }}>
-          Sample data. Not wired to the API or Stripe yet.
+        {status === 'void' && (
+          <div className="note" style={{ marginTop: 16 }}>
+            This invoice has been voided and is not payable.
+          </div>
+        )}
+
+        <p className="note-preview" style={{ marginTop: 20 }}>
+          Sample data. Not wired to the API or Zeffy yet.
         </p>
       </div>
     </div>

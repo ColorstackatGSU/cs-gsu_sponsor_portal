@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
 import { MOCK_CONTACT, MOCK_INVOICES, MOCK_SPONSOR, MOCK_TASKS, findTier } from '../data/mock';
-import { displayStatus, formatDate, formatMoney, daysUntil } from '../lib/format';
+import { displayStatus, formatDate, formatMoney, daysUntil, zeffyInvoiceUrl } from '../lib/format';
 
 /**
  * Shell only: everything here reads from src/data/mock.ts.
@@ -27,10 +27,12 @@ export default function Dashboard() {
 
         {openInvoice && (
           <Outstanding
+            id={openInvoice.id}
             amountCents={openInvoice.amountCents}
-            invoiceNumber={openInvoice.invoiceNumber}
+            title={openInvoice.title}
             dueAt={openInvoice.dueAt}
             processing={openInvoice.status === 'processing'}
+            zeffyInvoiceId={openInvoice.zeffyInvoiceId}
           />
         )}
 
@@ -118,9 +120,9 @@ export default function Dashboard() {
 
           <div className="rows">
             {recent.map((inv) => (
-              <Link key={inv.id} to={`/invoices/${inv.invoiceNumber}`} className="row">
+              <Link key={inv.id} to={`/invoices/${inv.id}`} className="row">
                 <span>
-                  <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{inv.invoiceNumber}</span>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>{inv.title}</span>
                   <span className="faint" style={{ display: 'block', fontSize: 12.5 }}>
                     Issued {formatDate(inv.issuedAt)}
                   </span>
@@ -148,17 +150,25 @@ export default function Dashboard() {
  * ACH gets its own copy: money that has left the sponsor's account but has not
  * settled is neither unpaid nor paid, and telling a company that already paid you
  * that they still owe you is the fastest way to lose them.
+ *
+ * Pay button opens Zeffy in a new tab if a Zeffy invoice is linked; otherwise it
+ * falls back to our detail page so the sponsor at least lands somewhere. The
+ * processing case always shows View invoice, because there is no action to take.
  */
 function Outstanding({
+  id,
   amountCents,
-  invoiceNumber,
+  title,
   dueAt,
   processing,
+  zeffyInvoiceId,
 }: {
+  id: string;
   amountCents: number;
-  invoiceNumber: string;
+  title: string;
   dueAt: string | null;
   processing: boolean;
+  zeffyInvoiceId: string | null;
 }) {
   const days = daysUntil(dueAt);
   const late = !processing && days !== null && days < 0;
@@ -184,10 +194,10 @@ function Outstanding({
         </p>
         <p style={{ margin: '2px 0 0', fontSize: 13.5 }}>
           {processing ? (
-            <>Bank transfer for {invoiceNumber} is clearing. This usually takes 3 to 5 business days.</>
+            <>Bank transfer for {title} is clearing. This usually takes 3 to 5 business days.</>
           ) : (
             <>
-              {invoiceNumber}
+              {title}
               {dueAt && (
                 <>
                   {' '}&middot; {late ? 'was due' : 'due'} {formatDate(dueAt)}
@@ -199,9 +209,13 @@ function Outstanding({
         </p>
       </div>
 
-      <Link to={`/invoices/${invoiceNumber}`} className="btn btn-primary">
-        {processing ? 'View invoice' : 'Pay this invoice'}
-      </Link>
+      {processing || !zeffyInvoiceId ? (
+        <Link to={`/invoices/${id}`} className="btn btn-primary">View invoice</Link>
+      ) : (
+        <a href={zeffyInvoiceUrl(zeffyInvoiceId)} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+          Pay on Zeffy &#x2197;
+        </a>
+      )}
     </div>
   );
 }
