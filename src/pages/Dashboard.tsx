@@ -1,17 +1,61 @@
 import { Link } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
-import { MOCK_CONTACT, MOCK_INVOICES, MOCK_SPONSOR, MOCK_TASKS, findTier } from '../data/mock';
+import { MOCK_INVOICES, MOCK_TASKS, MOCK_TIERS } from '../data/mock';
 import { displayStatus, formatDate, formatMoney, daysUntil, zeffyInvoiceUrl } from '../lib/format';
+import { useMe } from '../hooks/useMe';
+import { ORG } from '../data/org';
 
 /**
- * Shell only: everything here reads from src/data/mock.ts.
+ * Header (sponsor name + signed-in-as) reads from /me on the API. Invoices and
+ * tasks stay on mock data until step 6 adds those endpoints.
  *
- * The page answers three questions in the order a sponsor cares about them: do I owe
- * you anything, what am I getting, and what do you need from me.
+ * The page answers three questions in the order a sponsor cares about them: do I
+ * owe you anything, what am I getting, and what do you need from me.
  */
 export default function Dashboard() {
-  const sponsor = MOCK_SPONSOR;
-  const tier = findTier(sponsor.tierId);
+  const me = useMe();
+
+  // Anything that comes off the API waits for that fetch; mock data does not.
+  if (me.status === 'loading') {
+    return (
+      <div className="page">
+        <div className="wrap">
+          <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (me.status === 'unlinked') {
+    return (
+      <div className="page">
+        <div className="wrap-narrow" style={{ textAlign: 'center', paddingTop: 40 }}>
+          <h1>Your account isn't linked yet</h1>
+          <p className="muted" style={{ fontSize: 14, marginTop: 8 }}>
+            You are signed in, but no sponsor is associated with this email. Email{' '}
+            <a className="link" href={`mailto:${ORG.billingEmail}`}>{ORG.billingEmail}</a> and
+            we'll finish setting up your access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (me.status === 'error') {
+    return (
+      <div className="page">
+        <div className="wrap">
+          <div className="note note-error">Couldn't load your account: {me.message}</div>
+        </div>
+      </div>
+    );
+  }
+
+  const { contact, sponsor } = me.me;
+  // Look up the tier by name from mock (for the benefits list). The API returns
+  // tierName as a string, which matches the mock's `name` field. Once step 6 adds
+  // /tiers to the API we drop the mock lookup entirely.
+  const tier = sponsor.tierName ? MOCK_TIERS.find((t) => t.name === sponsor.tierName) : undefined;
   const openInvoice = MOCK_INVOICES.find((i) => i.status === 'issued' || i.status === 'processing');
   const openTasks = MOCK_TASKS.filter((t) => t.status === 'todo');
   const recent = MOCK_INVOICES.slice(0, 3);
@@ -21,8 +65,8 @@ export default function Dashboard() {
       <div className="wrap">
         <h1>{sponsor.name}</h1>
         <p className="muted" style={{ fontSize: 14, marginTop: 2 }}>
-          Signed in as {MOCK_CONTACT.fullName}
-          {MOCK_CONTACT.title ? `, ${MOCK_CONTACT.title}` : ''}
+          Signed in as {contact.fullName || contact.email}
+          {contact.title ? `, ${contact.title}` : ''}
         </p>
 
         {openInvoice && (

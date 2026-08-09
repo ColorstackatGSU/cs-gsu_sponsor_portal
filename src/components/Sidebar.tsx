@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../auth/AuthProvider';
 
 /**
  * The signed-in shell's left column, modelled on app.colorstack.io: a fixed 224px
@@ -21,6 +22,21 @@ const NAV = [
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const { signOut } = useAuth();
+  const nav = useNavigate();
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      nav('/login', { replace: true });
+    } finally {
+      setSigningOut(false);
+      setOpen(false);
+    }
+  }
 
   // Close on route change and on Escape. Without this a link tap inside the drawer
   // navigates but leaves the drawer open over the destination.
@@ -77,12 +93,16 @@ export default function Sidebar() {
         </nav>
 
         <div className="side-foot">
-          {/* Auth lands in step 5. A button that looks real but does nothing is
-              worse than one that is visibly not ready. */}
-          <span className="side-link" style={{ color: 'var(--ink-faint)', cursor: 'default' }}>
+          <button
+            type="button"
+            className="side-link"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            style={{ width: '100%', textAlign: 'left', cursor: signingOut ? 'wait' : 'pointer' }}
+          >
             <IconLogout />
-            Sign out
-          </span>
+            {signingOut ? 'Signing out…' : 'Sign out'}
+          </button>
         </div>
       </aside>
     </>
