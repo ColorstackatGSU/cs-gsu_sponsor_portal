@@ -3,6 +3,18 @@ import { api, ApiError } from '../lib/api';
 import { useAuth } from '../auth/AuthProvider';
 
 /**
+ * External-refresh channel: anything that mutates the sponsor contact (today,
+ * the profile page's PATCH /me) calls refreshMe() and every mounted useMe
+ * re-fetches. Avoids threading a context provider through the whole tree for
+ * one edit form. Module-scoped so it survives HMR of individual pages.
+ */
+type Listener = () => void;
+const meRefreshListeners = new Set<Listener>();
+export function refreshMe(): void {
+  meRefreshListeners.forEach((fn) => fn());
+}
+
+/**
  * The Contact + Sponsor the signed-in user represents. Shape matches Spring's
  * MeResponse record so the JSON deserialises 1:1.
  *
@@ -48,6 +60,16 @@ type State =
 export function useMe(): State {
   const { user, loading: authLoading } = useAuth();
   const [state, setState] = useState<State>({ status: 'loading' });
+  // Incremented by refreshMe() to force a re-fetch across every mounted hook.
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const fn = (): void => setTick((t) => t + 1);
+    meRefreshListeners.add(fn);
+    return () => {
+      meRefreshListeners.delete(fn);
+    };
+  }, []);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -71,7 +93,7 @@ export function useMe(): State {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, tick]);
 
   return state;
 }

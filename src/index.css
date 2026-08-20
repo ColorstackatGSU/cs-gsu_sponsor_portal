@@ -494,3 +494,79 @@
   .muted, .faint, .table th { color: #444 !important; }
   .card { break-inside: avoid; }
 }
+
+/* ======================================================================
+   Welcome overlay
+   ------------------------------------------------------------------
+   The moment between "signed in" and "dashboard on screen." Full-screen
+   in the sponsor's brand colour with a check mark drawing, their name
+   fading up. See components/WelcomeOverlay.tsx for timing (~1.5s total).
+   ====================================================================== */
+
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: welcome-in 220ms ease-out;
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+.welcome-overlay.is-leaving { opacity: 0; }
+
+.welcome-inner {
+  text-align: center;
+  padding: 24px;
+  animation: welcome-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.welcome-check {
+  display: block;
+  margin: 0 auto 20px;
+}
+.welcome-check path {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: welcome-check-draw 600ms 200ms cubic-bezier(0.6, 0.15, 0.3, 1) forwards;
+}
+
+.welcome-hi {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.welcome-sponsor {
+  margin: 6px 0 0;
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+@keyframes welcome-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes welcome-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes welcome-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Respect prefers-reduced-motion: skip the animations, just show the state. */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-overlay,
+  .welcome-inner,
+  .welcome-check path {
+    animation: none !important;
+    transition: none !important;
+  }
+  .welcome-check path { stroke-dashoffset: 0; }
+}

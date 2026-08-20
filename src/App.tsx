@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Invoices from './pages/Invoices';
 import InvoiceDetail from './pages/InvoiceDetail';
+import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 
 /**
@@ -44,6 +45,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <InvoiceDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />

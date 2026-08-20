@@ -29,7 +29,13 @@ export default function Invoices() {
           ) : state.status === 'error' ? (
             <div className="note note-error">Couldn't load invoices: {state.message}</div>
           ) : state.invoices.length === 0 ? (
-            <p className="muted" style={{ fontSize: 14 }}>No invoices yet.</p>
+            <div style={{ padding: '32px 8px', textAlign: 'center' }}>
+              <p style={{ fontSize: 15, fontWeight: 500, margin: 0 }}>Nothing to show yet.</p>
+              <p className="muted" style={{ fontSize: 14, marginTop: 6 }}>
+                Once we issue your first invoice it will land here, and you'll get an email
+                with a Zeffy payment link.
+              </p>
+            </div>
           ) : (
             <>
               <table className="table only-wide">

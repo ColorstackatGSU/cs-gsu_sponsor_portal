@@ -164,7 +164,10 @@ export default function Dashboard() {
           ) : invoiceList.status === 'error' ? (
             <p className="muted" style={{ fontSize: 14 }}>Couldn't load invoices: {invoiceList.message}</p>
           ) : recent.length === 0 ? (
-            <p className="muted" style={{ fontSize: 14 }}>No invoices yet.</p>
+            <p className="muted" style={{ fontSize: 14 }}>
+              No invoices yet. When we issue your first sponsorship invoice, it will show
+              up here and you'll get an email.
+            </p>
           ) : (
             <div className="rows">
               {recent.map((inv) => (

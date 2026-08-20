@@ -18,6 +18,7 @@ import { useAuth } from '../auth/AuthProvider';
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: IconHome },
   { to: '/invoices', label: 'Invoices', icon: IconReceipt },
+  { to: '/profile', label: 'Profile', icon: IconUser },
 ];
 
 export default function Sidebar() {
@@ -135,6 +136,15 @@ function IconMenu() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden="true">
       <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
+function IconUser() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />
     </svg>
   );
 }

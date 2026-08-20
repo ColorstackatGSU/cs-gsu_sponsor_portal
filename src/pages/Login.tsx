@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, type CodeSent } from '../auth/AuthProvider';
+import WelcomeOverlay from '../components/WelcomeOverlay';
 import { ORG } from '../data/org';
 
 /**
@@ -24,15 +25,27 @@ export default function Login() {
   const { user, requestCode, verifyCode } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard';
+  const [search] = useSearchParams();
+  // Two paths land here: ProtectedRoute redirect (carries `from` in state) and
+  // the 401 handler in api.ts (uses window.location.assign, carries `?from=`).
+  // Prefer the state value when both are present, since it survives round-trips
+  // through the app more reliably than a query string a user might edit.
+  const from =
+    (location.state as { from?: string } | null)?.from ??
+    search.get('from') ??
+    '/dashboard';
 
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState<CodeSent | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Once verify-code succeeds, cover the form with the welcome overlay and
+  // hold the navigation until it completes. Prevents a jarring flash from
+  // "form" to "dashboard chrome" in a single frame.
+  const [welcoming, setWelcoming] = useState(false);
 
-  if (user) return <Navigate to={from} replace />;
+  if (user && !welcoming) return <Navigate to={from} replace />;
 
   async function onRequest(e: FormEvent) {
     e.preventDefault();
@@ -55,10 +68,12 @@ export default function Login() {
     setSubmitting(true);
     try {
       await verifyCode(email.trim().toLowerCase(), code.trim());
-      nav(from, { replace: true });
+      // Session is now stored. Show the welcome overlay; its onComplete
+      // navigates when the animation ends. Keep `submitting` true so the
+      // form is not interactive underneath the overlay if it flickers.
+      setWelcoming(true);
     } catch (err) {
       setError(messageOf(err, 'That code did not work.'));
-    } finally {
       setSubmitting(false);
     }
   }
@@ -71,6 +86,7 @@ export default function Login() {
 
   return (
     <div className="wrap-narrow">
+      {welcoming && <WelcomeOverlay onComplete={() => nav(from, { replace: true })} />}
       <form className="card" onSubmit={sent ? onVerify : onRequest} noValidate>
         <h1 style={{ fontSize: 18, marginBottom: 4 }}>Sign in</h1>
         <p className="muted" style={{ fontSize: 13.5, marginBottom: 18 }}>
