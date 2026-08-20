@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 /**
  * Wraps the app in a Supabase auth session. Two responsibilities:
@@ -11,19 +12,30 @@ import { supabase } from '../lib/supabase';
  *   2. Subscribe to onAuthStateChange so a sign-in or sign-out in this tab
  *      (or another tab of the same origin) updates the whole app immediately.
  *
- * Deliberately does NOT expose the raw supabase client. Callers use the exposed
- * signIn/signOut/signUp methods, so if we ever switch backends this file is the
- * only one that changes.
+ * Passwordless: the browser never handles a password. requestCode asks the
+ * Spring backend to mail a six-digit code, verifyCode swaps the code for a
+ * GoTrue magic-link token hash and completes it locally with verifyOtp, which
+ * mints and stores a real Supabase session. Return visits skip this entirely:
+ * supabase-js finds the persisted session on load.
  */
 
 type AuthContextValue = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  requestCode: (email: string) => Promise<CodeSent>;
+  verifyCode: (email: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
+
+export type CodeSent = {
+  /** May be null if we do not know their name yet — treat as optional. */
+  firstName: string | null;
+  /** Masked destination, e.g. "j***@company.com". Safe to render. */
+  sentTo: string;
+};
+
+type SessionGrant = { email: string; tokenHash: string };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -32,16 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial load: getSession() reads localStorage synchronously (from disk).
-    // Resolve loading=false only after this returns so ProtectedRoute never
-    // renders a redirect on the first frame for a signed-in user.
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
     });
 
-    // Keep the local state in sync with Supabase's. Fires on sign-in, sign-out,
-    // token refresh, and password recovery.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, next) => {
@@ -55,15 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     session,
     loading,
-    signIn: async (email, password) => {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    },
-    signUp: async (email, password) => {
-      // Local-dev flow only: sponsors self-signup with email + password. The real
-      // production flow is admin-invites-by-email + set-password-on-first-click,
-      // which lands in step 9 (admin pages) once we have real invite UI.
-      const { error } = await supabase.auth.signUp({ email, password });
+    requestCode: (email) => api.post<CodeSent>('/auth/sponsor/request-code', { email }),
+    verifyCode: async (email, code) => {
+      const grant = await api.post<SessionGrant>('/auth/sponsor/verify-code', { email, code });
+      // Completes the flow locally: supabase-js validates the hashed token with
+      // GoTrue, gets back an access + refresh token pair, and writes them to
+      // localStorage. Our onAuthStateChange subscription above then fires and
+      // updates every consumer of useAuth in the same frame.
+      const { error } = await supabase.auth.verifyOtp({
+        type: 'magiclink',
+        email: grant.email,
+        token_hash: grant.tokenHash,
+      });
       if (error) throw error;
     },
     signOut: async () => {

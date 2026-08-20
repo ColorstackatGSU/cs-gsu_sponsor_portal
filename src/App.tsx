@@ -2,17 +2,19 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import Login from './pages/Login';
-import Activate from './pages/Activate';
 import Dashboard from './pages/Dashboard';
 import Invoices from './pages/Invoices';
 import InvoiceDetail from './pages/InvoiceDetail';
 import NotFound from './pages/NotFound';
 
 /**
- * /login and /activate are public. Everything else is behind ProtectedRoute,
- * which bounces unauthenticated visitors to /login. The redirect stashes the
- * intended path in navigation state so /login can send them back after signing
- * in. Layout is the shared shell for both auth and app pages.
+ * /login is public. Everything else is behind ProtectedRoute, which bounces
+ * unauthenticated visitors to /login. The redirect stashes the intended path
+ * in navigation state so /login can send them back after signing in. Layout
+ * is the shared shell for both auth and app pages.
+ *
+ * There is no /activate: sign-in is passwordless and creates the GoTrue user
+ * on first successful verify, so first-time and returning flows are identical.
  */
 export default function App() {
   return (
@@ -20,7 +22,6 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="login" element={<Login />} />
-        <Route path="activate" element={<Activate />} />
 
         <Route
           path="dashboard"
