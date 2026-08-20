@@ -12,6 +12,8 @@ export const MOCK_TIERS: Tier[] = [
     name: 'Supporting Partner',
     amountCents: 50_000,
     benefits: [
+      'Logo on our website and social channels',
+      'A thank-you feature to members',
       'One dedicated event touchpoint (info session, workshop, or panel)',
       'Your logo on event slides, flyers, and signage',
     ],
@@ -24,8 +26,8 @@ export const MOCK_TIERS: Tier[] = [
     benefits: [
       'Everything in Supporting Partner',
       'Access to our member resume book',
-      'Your logo featured on our social media',
-      'Jobs, events, and opportunities in our monthly newsletter',
+      'Logo featured on our social media',
+      'Your jobs, events, and opportunities in our monthly newsletter',
     ],
     sortOrder: 2,
   },
@@ -36,7 +38,7 @@ export const MOCK_TIERS: Tier[] = [
     benefits: [
       'Everything in Community Partner',
       'Host a private workshop or event for our members (company covers food)',
-      'Priority booking for workshops and lunch and learns in Fall recruiting',
+      'Priority booking for workshops and lunch-and-learns in Fall recruiting season',
       'Featured company event coverage on our social media',
     ],
     sortOrder: 3,
@@ -47,10 +49,9 @@ export const MOCK_TIERS: Tier[] = [
     amountCents: 250_000,
     benefits: [
       'Everything in Signature Partner',
-      'Event naming rights (Presented by [Company])',
-      'First look at our member resume book before other tiers',
-      'Reserved speaking slot at a flagship event',
-      'Reserved for our earliest partners',
+      'Event naming (Presented by [Company])',
+      'First look at our member resume book',
+      'Reserved speaking slot',
     ],
     sortOrder: 4,
   },
