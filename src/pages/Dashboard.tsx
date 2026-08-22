@@ -12,6 +12,11 @@ import { ORG } from '../data/org';
  * because there is no /tiers endpoint yet; the API returns tierName on the
  * sponsor, we look up the mock tier by name to render its benefits list. When
  * step 9 adds admin tier management, /tiers ships and this lookup drops.
+ *
+ * Layout: sponsor name as the page title, one loud amount-due block if anything
+ * is outstanding, then tier and tasks side by side, then recent invoices. The
+ * due block is the only element that fills with colour, so the eye lands on the
+ * one thing that might need an action.
  */
 export default function Dashboard() {
   const me = useMe();
@@ -23,9 +28,9 @@ export default function Dashboard() {
   if (me.status === 'unlinked') {
     return (
       <div className="page">
-        <div className="wrap-narrow" style={{ textAlign: 'center', paddingTop: 40 }}>
-          <h1>Your account isn't linked yet</h1>
-          <p className="muted" style={{ fontSize: 14, marginTop: 8 }}>
+        <div className="wrap-narrow" style={{ paddingTop: 40, textAlign: 'center' }}>
+          <h1>Not linked yet</h1>
+          <p className="page-sub" style={{ margin: '14px auto 0' }}>
             You are signed in, but no sponsor is associated with this email. Email{' '}
             <a className="link" href={`mailto:${ORG.billingEmail}`}>{ORG.billingEmail}</a> and
             we'll finish setting up your access.
@@ -56,11 +61,14 @@ export default function Dashboard() {
   return (
     <div className="page">
       <div className="wrap">
-        <h1>{sponsor.name}</h1>
-        <p className="muted" style={{ fontSize: 14, marginTop: 2 }}>
-          Signed in as {contact.fullName || contact.email}
-          {contact.title ? `, ${contact.title}` : ''}
-        </p>
+        <header className="page-head">
+          <span className="eyebrow">Sponsor dashboard</span>
+          <h1>{sponsor.name}</h1>
+          <p className="page-sub">
+            Signed in as {contact.fullName || contact.email}
+            {contact.title ? `, ${contact.title}` : ''}
+          </p>
+        </header>
 
         {openInvoice && (
           <Outstanding
@@ -75,112 +83,105 @@ export default function Dashboard() {
 
         <div className="dash-grid">
           {/* ===== TIER ===== */}
-          <div className="card">
+          <section className="card card-flush card-yellow">
             <div className="card-head">
               <span className="card-title">Your sponsorship</span>
-              {tier && <button type="button" className="btn btn-secondary btn-sm" disabled>Change</button>}
+              {tier && <button type="button" className="btn btn-sm btn-secondary" disabled>Change</button>}
             </div>
 
-            {tier ? (
-              <>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 20, fontWeight: 600 }}>{tier.name}</span>
-                  <span className="num muted" style={{ fontSize: 14 }}>
-                    {formatMoney(tier.amountCents)} per year
-                  </span>
-                </div>
+            <div className="card-pad">
+              {tier ? (
+                <>
+                  <div className="tier-name">
+                    <strong>{tier.name}</strong>
+                    <span className="tier-price">{formatMoney(tier.amountCents)} / year</span>
+                  </div>
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: '14px 0 0' }}>
-                  {tier.benefits.map((b) => (
-                    <li
-                      key={b}
-                      style={{ display: 'flex', gap: 8, padding: '6px 0', fontSize: 14, color: 'var(--ink-muted)' }}
-                    >
-                      <span aria-hidden="true" style={{ color: 'var(--brand)' }}>&#8226;</span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p className="muted" style={{ fontSize: 14 }}>No tier assigned yet. We'll set this up with you.</p>
-            )}
-          </div>
+                  <ul className="benefits">
+                    {tier.benefits.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="page-sub" style={{ marginTop: 0 }}>
+                  No tier assigned yet. We'll set this up with you.
+                </p>
+              )}
+            </div>
+          </section>
 
           {/* ===== TASKS ===== */}
-          <div className="card">
+          <section className="card card-flush card-sky">
             <div className="card-head">
               <span className="card-title">What we need from you</span>
-              {openTasks.length > 0 && <span className="faint" style={{ fontSize: 13 }}>{openTasks.length} open</span>}
+              {openTasks.length > 0 && <span className="sticker">{openTasks.length} open</span>}
             </div>
 
-            {taskList.status === 'loading' ? (
-              <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
-            ) : taskList.status === 'error' ? (
-              <p className="muted" style={{ fontSize: 14 }}>Couldn't load tasks: {taskList.message}</p>
-            ) : openTasks.length === 0 ? (
-              <p className="muted" style={{ fontSize: 14 }}>
-                Nothing outstanding. We'll let you know when something comes up.
-              </p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {openTasks.map((task, i) => {
-                  const days = daysUntil(task.dueAt);
-                  const late = days !== null && days < 0;
-                  return (
-                    <li
-                      key={task.id}
-                      style={{ padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid var(--line)' }}
-                    >
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{task.title}</p>
-                      {task.description && (
-                        <p className="muted" style={{ margin: '3px 0 0', fontSize: 13.5 }}>{task.description}</p>
-                      )}
-                      {task.dueAt && (
-                        <p
-                          className="num"
-                          style={{ margin: '4px 0 0', fontSize: 12.5, color: late ? 'var(--bad)' : 'var(--ink-faint)' }}
-                        >
-                          {late ? 'Was due ' : 'Due '}{formatDate(task.dueAt)}
-                        </p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+            <div className="card-pad">
+              {taskList.status === 'loading' ? (
+                <p className="page-sub" style={{ marginTop: 0 }}>Loading…</p>
+              ) : taskList.status === 'error' ? (
+                <p className="page-sub" style={{ marginTop: 0 }}>Couldn't load tasks: {taskList.message}</p>
+              ) : openTasks.length === 0 ? (
+                <p className="page-sub" style={{ marginTop: 0 }}>
+                  Nothing outstanding. We'll let you know when something comes up.
+                </p>
+              ) : (
+                <ul className="tasks">
+                  {openTasks.map((task) => {
+                    const days = daysUntil(task.dueAt);
+                    const late = days !== null && days < 0;
+                    return (
+                      <li key={task.id} className="task">
+                        <p className="task-title">{task.title}</p>
+                        {task.description && <p className="task-body">{task.description}</p>}
+                        {task.dueAt && (
+                          <span className={late ? 'task-due task-due-late' : 'task-due'}>
+                            {late ? 'Was due ' : 'Due '}{formatDate(task.dueAt)}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </section>
         </div>
 
         {/* ===== RECENT INVOICES ===== */}
-        <div className="card" style={{ marginTop: 16 }}>
+        <section className="card card-flush" style={{ marginTop: 22 }}>
           <div className="card-head">
             <span className="card-title">Recent invoices</span>
-            <Link to="/invoices" className="link" style={{ fontSize: 13.5 }}>View all</Link>
+            <Link to="/invoices" className="btn btn-sm btn-secondary">View all</Link>
           </div>
 
           {invoiceList.status === 'loading' ? (
-            <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
+            <div className="card-pad"><p className="page-sub" style={{ marginTop: 0 }}>Loading…</p></div>
           ) : invoiceList.status === 'error' ? (
-            <p className="muted" style={{ fontSize: 14 }}>Couldn't load invoices: {invoiceList.message}</p>
+            <div className="card-pad">
+              <p className="page-sub" style={{ marginTop: 0 }}>Couldn't load invoices: {invoiceList.message}</p>
+            </div>
           ) : recent.length === 0 ? (
-            <p className="muted" style={{ fontSize: 14 }}>
-              No invoices yet. When we issue your first sponsorship invoice, it will show
-              up here and you'll get an email.
-            </p>
+            <div className="empty">
+              <p className="empty-title">No invoices yet</p>
+              <p className="empty-body">
+                When we issue your first sponsorship invoice it will show up here, and
+                you'll get an email.
+              </p>
+            </div>
           ) : (
             <div className="rows">
               {recent.map((inv) => (
                 <Link key={inv.id} to={`/invoices/${inv.id}`} className="row">
                   <span>
-                    <span style={{ fontSize: 14, fontWeight: 500 }}>{inv.title}</span>
-                    <span className="faint" style={{ display: 'block', fontSize: 12.5 }}>
-                      Issued {formatDate(inv.issuedAt)}
-                    </span>
+                    <span className="row-title">{inv.title}</span>
+                    <span className="row-meta num">Issued {formatDate(inv.issuedAt)}</span>
                   </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <span className="num" style={{ fontSize: 14, fontWeight: 500 }}>{formatMoney(inv.amountCents)}</span>
-                    <span style={{ minWidth: 132, display: 'flex', justifyContent: 'flex-end' }}>
+                  <span className="row-right">
+                    <span className="row-amount num">{formatMoney(inv.amountCents)}</span>
+                    <span style={{ minWidth: 148, display: 'flex', justifyContent: 'flex-end' }}>
                       <StatusPill status={displayStatus(inv)} />
                     </span>
                   </span>
@@ -188,7 +189,7 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
@@ -198,7 +199,7 @@ function Loading() {
   return (
     <div className="page">
       <div className="wrap">
-        <p className="muted" style={{ fontSize: 14 }}>Loading…</p>
+        <p className="page-sub" style={{ marginTop: 0 }}>Loading…</p>
       </div>
     </div>
   );
@@ -244,25 +245,13 @@ function Outstanding({
   const late = !processing && days !== null && days < 0;
 
   return (
-    <div
-      className={`card ${processing ? 'note-info' : late ? 'note-error' : 'note-warn'}`}
-      style={{
-        marginTop: 20,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        flexWrap: 'wrap',
-      }}
-    >
+    <section className={`due ${processing ? 'due-processing' : late ? 'due-late' : ''}`}>
       <div>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 500 }}>
+        <p className="due-label">
           {processing ? 'Payment in progress' : late ? 'Overdue' : 'Amount due'}
         </p>
-        <p className="num" style={{ margin: '2px 0 0', fontSize: 24, fontWeight: 600 }}>
-          {formatMoney(amountCents)}
-        </p>
-        <p style={{ margin: '2px 0 0', fontSize: 13.5 }}>
+        <p className="due-amount">{formatMoney(amountCents)}</p>
+        <p className="due-meta">
           {processing ? (
             <>Bank transfer for {title} is clearing. This usually takes 3 to 5 business days.</>
           ) : (
@@ -280,12 +269,12 @@ function Outstanding({
       </div>
 
       {processing || !zeffyInvoiceId ? (
-        <Link to={`/invoices/${id}`} className="btn btn-primary">View invoice</Link>
+        <Link to={`/invoices/${id}`} className="btn btn-ink">View invoice</Link>
       ) : (
-        <a href={zeffyInvoiceUrl(zeffyInvoiceId)} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+        <a href={zeffyInvoiceUrl(zeffyInvoiceId)} target="_blank" rel="noopener noreferrer" className="btn btn-ink">
           Pay on Zeffy &#x2197;
         </a>
       )}
-    </div>
+    </section>
   );
 }

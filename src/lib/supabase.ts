@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env';
 
 /**
  * The one Supabase client for the app. Auth only: we use it to obtain and refresh
@@ -8,19 +9,17 @@ import { createClient } from '@supabase/supabase-js';
  *
  * The URL and anon key are per-environment. Locally they point at the Supabase
  * stack in ../cs-gsu_backend on the 544xx port band. In production they point at
- * the cloud project. If either is missing at load time we throw here rather than
- * later at the first sign-in attempt, so a bad env is visible on page load.
+ * the cloud project.
+ *
+ * A missing var is reported by main.tsx, which renders the setup screen instead
+ * of the app (see lib/env.ts). This module must not throw at import time: it is
+ * pulled in by AuthProvider, which main.tsx imports statically, so a throw here
+ * takes down the whole module graph before anything can be rendered and the
+ * developer gets a blank page. The placeholders below only exist to keep
+ * createClient happy in that case; the client is never used, because the app
+ * never mounts.
  */
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!url || !anonKey) {
-  throw new Error(
-    'VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set. Copy .env.example to .env.local and fill them in.',
-  );
-}
-
-export const supabase = createClient(url, anonKey, {
+export const supabase = createClient(SUPABASE_URL || 'http://localhost', SUPABASE_ANON_KEY || 'not-configured', {
   auth: {
     // Persist session in localStorage so a refresh keeps the sponsor signed in.
     persistSession: true,

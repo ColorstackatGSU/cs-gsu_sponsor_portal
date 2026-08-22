@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { API_URL } from './env';
 
 /**
  * The one place we call the Spring API. Attaches the current Supabase access
@@ -14,11 +15,8 @@ import { supabase } from './supabase';
  * showing spinners against an API that will keep 401ing forever.
  */
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  throw new Error('VITE_API_URL must be set. Copy .env.example to .env.local and fill it in.');
-}
+/* API_URL comes from lib/env, which does not throw on a missing var: main.tsx
+   renders the setup screen instead, so nothing here ever runs unconfigured. */
 
 export class ApiError extends Error {
   // Explicit fields rather than parameter-property shorthand: tsconfig's

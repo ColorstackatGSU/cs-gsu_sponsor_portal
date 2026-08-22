@@ -57,21 +57,26 @@ export default function WelcomeOverlay({ onComplete }: Props) {
   return (
     <div
       className={fadingOut ? 'welcome-overlay is-leaving' : 'welcome-overlay'}
-      style={{ background: bg, color: ink }}
+      /* backgroundColor, not background: the shorthand would wipe out the dot
+         pattern the stylesheet paints over this. */
+      style={{ backgroundColor: bg, color: ink }}
       role="status"
       aria-live="polite"
       aria-label={me ? `Signing you in as ${me.contact.fullName ?? me.contact.email} at ${sponsorName}` : 'Signing you in'}
     >
       <div className="welcome-inner">
-        <svg className="welcome-check" viewBox="0 0 60 60" width="60" height="60" aria-hidden="true">
-          <circle cx="30" cy="30" r="27" fill="none" stroke="currentColor" strokeWidth="2.5" opacity="0.35" />
+        {/* Ink frame, yellow fill, ink check. Yellow rather than the sponsor's
+            colour: the brand already owns the full-screen background, and a dark
+            brand would swallow a black check mark drawn on top of it. */}
+        <svg className="welcome-check" viewBox="0 0 60 60" width="62" height="62" aria-hidden="true">
+          <rect x="3" y="3" width="54" height="54" fill="var(--yellow)" stroke="currentColor" strokeWidth="3.5" />
           <path
-            d="M18 31 L27 40 L43 22"
+            d="M17 31 L26 40 L43 21"
             fill="none"
             stroke="currentColor"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeWidth="5"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
           />
         </svg>
         <p className="welcome-hi">Welcome</p>

@@ -40,41 +40,57 @@ comma, parentheses, or two sentences.
 
 ## Design system
 
-Modelled on **app.colorstack.io**, not on `../cs-gsu_official_website`. This is a
-deliberate split: the marketing site is a marketing site (dark navy, Montserrat, pill
-buttons, uppercase eyebrows), and this is an application, which should get out of the
-way. The chapter's own member portal should move to this language too.
+**Neo-brutalist.** Hard black rules, solid offset shadows that never blur, flat loud
+fills, uppercase display type, zero corner radius, no gradients. The portal used to be
+a quiet white application modelled on app.colorstack.io; that was replaced deliberately.
 
 The source of truth is the `:root` block in [`src/index.css`](src/index.css), **not**
 `tailwind.config.js`.
 
-- White surface `#ffffff`, subtle `#f9fafb`, hairline rules `#e5e7eb`
-- Ink `#111827`, muted `#6b7280`, faint `#9ca3af`
-- GSU blue `#0039A6` is the **only** accent: primary buttons, links, active nav, focus
-  rings. Nothing else is coloured for decoration
-- 8px corners, `ui-sans-serif / system-ui`, sentence case, no letter-spacing
-- Plain sticky top bar with a hairline under it, not a floating pill
+- Ink `#14110D` is every border, every rule and all body text. One weight, `--bw` (3px),
+  for structure and `--bw-thin` (2px) for chips and small controls
+- Cream canvas `#FBF4E4` under a dot grid, white card bodies on top
+- Shadows are solid and offset down-right (`3px 3px 0`, `5px 5px 0`, `8px 8px 0`), never
+  blurred. Interactive things press into their shadow on hover, travelling exactly as far
+  as the shadow is offset
+- The loud set (yellow `#FFDD33`, lime, mint, sky, pink, coral, orange, violet) is chosen
+  so every one of them carries ink-black text
+- Archivo Black for display, Space Grotesk for interface text, Space Mono for money and
+  dates. Uppercase with tight tracking on headings, wide tracking on labels
 
-What was deliberately removed: dark navy surfaces, Montserrat, fully-rounded pill
-buttons, uppercase wide-tracked eyebrow labels, gradients and blurred colour orbs. All
-of it was decoration doing no work.
+Four rules keep it a billing tool rather than a poster:
 
-Sign in and account setup centre a card on a faintly tiled chapter mark. The mark is a
-filled circle, so it is tiled small, sparse, and masked out towards the middle: tiled
-tightly it reads as a grey block field rather than as texture.
+1. **Colour sits on frames, header bars, status chips and one hero block per page.** Card
+   bodies stay white, so a table of invoices stays readable
+2. **Every border is the same ink at the same weight.** Consistency is what makes heavy
+   borders read as a system instead of as noise
+3. **Text on a coloured fill is always ink black,** and colour never carries meaning
+   alone: every pill and every block also spells its state out
+4. **One hero per page.** On the dashboard that is the amount due, and nothing else on
+   the page fills with colour
 
-### Sponsor brand theming (step 10, not built yet)
+Custom classes deliberately live **outside** `@layer components`. Tailwind tree-shakes
+that layer against the content files, and `statusPillClass()` builds `pill-paid` at
+runtime from a template string, so those rules get dropped from the build. Plain CSS is
+passed through untouched. Do not move them back.
+
+Signed-out pages are a two-panel split: a brand-coloured panel that says what the portal
+is, and the form beside it. Below 920px the panel drops and a compact brand bar above the
+form takes its place.
+
+### Sponsor brand theming
 
 `--brand`, `--brand-hover`, `--brand-soft` and `--brand-ink` default to GSU blue and get
-overwritten per sponsor at runtime.
+overwritten per sponsor at runtime by `components/SponsorBrandTheme.tsx`, which derives
+all four from one `brand_hex` (see `lib/brand.ts`).
 
-Two rules when that lands:
+Two rules:
 
-- **Accents only.** They are already scoped to buttons, links, the active nav item and
-  focus rings. Do not widen that set. A brand colour that recolours everything means one
-  bad hex wrecks the whole page.
-- **Contrast floor.** If a brand colour fails 4.5:1 against white, fall back to GSU blue.
-  A pale yellow brand on a white page is invisible.
+- **Accents only.** They are scoped to primary buttons, the active nav item, benefit
+  markers and the sign-in panel. Do not widen that set. A brand colour that recolours
+  everything means one bad hex wrecks the whole page.
+- **Contrast floor.** `lib/brand.ts` picks the ink colour that clears 3:1 against the
+  brand, and falls back to near-black when neither does.
 
 ## Money-safety rules
 

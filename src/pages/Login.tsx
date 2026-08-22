@@ -13,13 +13,17 @@ import { ORG } from '../data/org';
  *      magic-link token hash, and finish it locally with verifyOtp, which
  *      stores a real Supabase session in localStorage.
  *
+ * The step count is on screen ("step 1 of 2") because the sponsor has to leave
+ * the page to fetch the code, and a form that changes under them when they come
+ * back needs to have told them it would.
+ *
  * Already-signed-in visitors are bounced straight to /dashboard: landing on
  * /login is almost always a stale back-button, and rendering the form would
  * let them sign in as a different account without signing out first.
  *
  * No /activate any more: the first-time and returning flows are identical
- * — an admin creates the sponsor_contacts row by SQL, the sponsor requests
- * a code, and GoTrue provisions the auth user on first successful verify.
+ * (an admin creates the sponsor_contacts row by SQL, the sponsor requests a
+ * code, and GoTrue provisions the auth user on first successful verify).
  */
 export default function Login() {
   const { user, requestCode, verifyCode } = useAuth();
@@ -85,18 +89,24 @@ export default function Login() {
   }
 
   return (
-    <div className="wrap-narrow">
+    <div>
       {welcoming && <WelcomeOverlay onComplete={() => nav(from, { replace: true })} />}
-      <form className="card" onSubmit={sent ? onVerify : onRequest} noValidate>
-        <h1 style={{ fontSize: 18, marginBottom: 4 }}>Sign in</h1>
-        <p className="muted" style={{ fontSize: 13.5, marginBottom: 18 }}>
-          {sent
-            ? `We sent a six-digit code to ${sent.sentTo}. Enter it below to sign in.`
-            : 'Enter your work email and we will send you a six-digit sign-in code.'}
-        </p>
 
+      <header className="auth-head">
+        <span className={sent ? 'eyebrow eyebrow-mint' : 'eyebrow'}>
+          {sent ? 'Step 2 of 2' : 'Step 1 of 2'}
+        </span>
+        <h1>{sent ? 'Enter your code' : 'Sign in'}</h1>
+        <p className="page-sub">
+          {sent
+            ? `We sent a six-digit code to ${sent.sentTo}. It expires in 10 minutes.`
+            : 'Enter your work email and we will send you a six-digit sign-in code. No password to remember.'}
+        </p>
+      </header>
+
+      <form className="card" onSubmit={sent ? onVerify : onRequest} noValidate>
         {error && (
-          <div className="note note-error" style={{ marginBottom: 14 }} role="alert">
+          <div className="note note-error" style={{ marginBottom: 18 }} role="alert">
             {error}
           </div>
         )}
@@ -125,8 +135,8 @@ export default function Login() {
               inputMode="numeric"
               pattern="\d{6}"
               maxLength={6}
-              className="input"
-              placeholder="123456"
+              className="input input-code"
+              placeholder="000000"
               autoComplete="one-time-code"
               required
               autoFocus
@@ -134,9 +144,6 @@ export default function Login() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
               disabled={submitting}
             />
-            <p className="hint" style={{ marginTop: 6 }}>
-              The code expires in 10 minutes.
-            </p>
           </div>
         )}
 
@@ -154,19 +161,19 @@ export default function Login() {
           <button
             type="button"
             className="btn btn-secondary btn-block"
-            style={{ marginTop: 10 }}
+            style={{ marginTop: 12 }}
             onClick={reset}
             disabled={submitting}
           >
             Use a different email
           </button>
         )}
-
-        <p className="hint" style={{ marginTop: 14 }}>
-          Accounts are created by invitation. If your company sponsors us and you need
-          access, email <a className="link" href={`mailto:${ORG.billingEmail}`}>{ORG.billingEmail}</a>.
-        </p>
       </form>
+
+      <p className="hint" style={{ marginTop: 16 }}>
+        Accounts are created by invitation. If your company sponsors us and you need
+        access, email <a className="link" href={`mailto:${ORG.billingEmail}`}>{ORG.billingEmail}</a>.
+      </p>
     </div>
   );
 }
