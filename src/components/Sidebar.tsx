@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
+import { useMe } from '../hooks/useMe';
 import { ORG } from '../data/org';
 
 /**
@@ -17,17 +18,38 @@ import { ORG } from '../data/org';
  * drawn at stroke 2.25 so they hold up next to the uppercase labels.
  */
 
-const NAV = [
+// Directory nav is only shown to sponsors on tiers that include resume book
+// access. Non-eligible sponsors do not see the link at all — the page still
+// exists and gives an upgrade prompt if hit directly, so nav visibility is
+// UX polish, not a permission boundary.
+const RESUME_BOOK_TIERS = new Set([
+  'Community Partner',
+  'Signature Partner',
+  'Founding Partner',
+]);
+
+const BASE_NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: IconHome },
   { to: '/invoices', label: 'Invoices', icon: IconReceipt },
-  { to: '/profile', label: 'Profile', icon: IconUser },
 ];
+const DIRECTORY_ITEM = { to: '/directory', label: 'Directory', icon: IconPeople };
+const PROFILE_ITEM = { to: '/profile', label: 'Profile', icon: IconUser };
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const { signOut } = useAuth();
+  const me = useMe();
   const nav = useNavigate();
+
+  const items = useMemo(() => {
+    const eligible =
+      me.status === 'ready' && me.me.sponsor.tierName != null &&
+      RESUME_BOOK_TIERS.has(me.me.sponsor.tierName);
+    return eligible
+      ? [...BASE_NAV, DIRECTORY_ITEM, PROFILE_ITEM]
+      : [...BASE_NAV, PROFILE_ITEM];
+  }, [me]);
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -91,7 +113,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="side-nav" aria-label="Primary">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {items.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -163,6 +185,17 @@ function IconUser() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />
+    </svg>
+  );
+}
+
+function IconPeople() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.25" />
+      <path d="M3 20c1-3 3.5-4.5 6-4.5s5 1.5 6 4.5" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M15.5 15c2.5 0 4.5 1.5 5.5 4" />
     </svg>
   );
 }
