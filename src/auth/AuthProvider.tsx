@@ -69,9 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // GoTrue, gets back an access + refresh token pair, and writes them to
       // localStorage. Our onAuthStateChange subscription above then fires and
       // updates every consumer of useAuth in the same frame.
+      // supabase-js refuses if `email` is passed alongside `token_hash`:
+      // the token_hash form identifies the user itself and adding the email
+      // is treated as ambiguous input. Send only what the token_hash flow
+      // wants — the type discriminator and the hash — and let GoTrue derive
+      // the identity from the hash.
       const { error } = await supabase.auth.verifyOtp({
         type: 'magiclink',
-        email: grant.email,
         token_hash: grant.tokenHash,
       });
       if (error) throw error;
