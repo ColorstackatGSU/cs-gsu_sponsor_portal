@@ -27,11 +27,29 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  if (state.status === 'loading' || state.status === 'unlinked') {
+  if (state.status === 'loading') {
     return (
       <div className="page">
         <div className="wrap">
           <p className="page-sub" style={{ marginTop: 0 }}>Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.status === 'unlinked') {
+    // Same copy the dashboard shows for this state. Kept in sync by hand
+    // rather than through a shared component so a chapter-copy change here
+    // does not silently retag every page — the dashboard has its own tone.
+    return (
+      <div className="page">
+        <div className="wrap-narrow" style={{ paddingTop: 40, textAlign: 'center' }}>
+          <h1>Not linked yet</h1>
+          <p className="page-sub" style={{ margin: '14px auto 0' }}>
+            You are signed in, but no sponsor is associated with this email.
+            Email <a className="link" href="mailto:official@colorstackatgsu.com">official@colorstackatgsu.com</a> and
+            we'll finish setting up your access.
+          </p>
         </div>
       </div>
     );
