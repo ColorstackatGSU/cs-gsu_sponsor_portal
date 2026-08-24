@@ -1,17 +1,17 @@
 import { Link } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
-import { MOCK_TIERS } from '../data/mock';
 import { displayStatus, formatDate, formatMoney, daysUntil, zeffyInvoiceUrl } from '../lib/format';
 import { useMe } from '../hooks/useMe';
 import { useInvoices, type ApiInvoice } from '../hooks/useInvoices';
 import { useTasks } from '../hooks/useTasks';
+import { useTiers } from '../hooks/useTiers';
 import { ORG } from '../data/org';
 
 /**
- * All data comes from the API. Tier benefits still resolve against MOCK_TIERS
- * because there is no /tiers endpoint yet; the API returns tierName on the
- * sponsor, we look up the mock tier by name to render its benefits list. When
- * step 9 adds admin tier management, /tiers ships and this lookup drops.
+ * All data comes from the API. /me carries the sponsor's tierName; /tiers
+ * carries the catalog, and we look up this sponsor's tier by name to render
+ * its benefits list. If /tiers is still loading or failed we omit the tier
+ * card rather than block the whole dashboard on it.
  *
  * Layout: sponsor name as the page title, one loud amount-due block if anything
  * is outstanding, then tier and tasks side by side, then recent invoices. The
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const me = useMe();
   const invoiceList = useInvoices();
   const taskList = useTasks();
+  const tierList = useTiers();
 
   if (me.status === 'loading') return <Loading />;
 
@@ -45,7 +46,10 @@ export default function Dashboard() {
   }
 
   const { contact, sponsor } = me.me;
-  const tier = sponsor.tierName ? MOCK_TIERS.find((t) => t.name === sponsor.tierName) : undefined;
+  const tier =
+    sponsor.tierName && tierList.status === 'ready'
+      ? tierList.tiers.find((t) => t.name === sponsor.tierName)
+      : undefined;
 
   // Derive invoice-list-dependent state from whatever came back. Loading and
   // error are non-blocking for the dashboard header; we render as much as we can.

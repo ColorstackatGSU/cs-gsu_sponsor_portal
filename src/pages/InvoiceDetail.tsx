@@ -1,8 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
-import { MOCK_TIERS } from '../data/mock';
 import { useMe } from '../hooks/useMe';
 import { useInvoice } from '../hooks/useInvoices';
+import { useTiers } from '../hooks/useTiers';
 import { displayStatus, formatDate, formatMoney, daysUntil, zeffyInvoiceUrl } from '../lib/format';
 
 /**
@@ -22,6 +22,7 @@ export default function InvoiceDetail() {
   const { id } = useParams<{ id: string }>();
   const state = useInvoice(id);
   const me = useMe();
+  const tierList = useTiers();
 
   if (state.status === 'loading' || me.status === 'loading') {
     return (
@@ -62,9 +63,10 @@ export default function InvoiceDetail() {
   const payable = status === 'issued' || status === 'overdue';
   const days = daysUntil(invoice.dueAt);
   const late = payable && days !== null && days < 0;
-  const tier = invoice.tierName
-    ? MOCK_TIERS.find((t) => t.name === invoice.tierName)
-    : undefined;
+  const tier =
+    invoice.tierName && tierList.status === 'ready'
+      ? tierList.tiers.find((t) => t.name === invoice.tierName)
+      : undefined;
   const sponsorName = me.status === 'ready' ? me.me.sponsor.name : '';
 
   return (
