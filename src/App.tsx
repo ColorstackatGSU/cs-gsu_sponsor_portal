@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Invoices from './pages/Invoices';
 import InvoiceDetail from './pages/InvoiceDetail';
 import Directory from './pages/Directory';
+import Impersonate from './pages/Impersonate';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 
@@ -24,6 +25,9 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="login" element={<Login />} />
+        {/* Officer view-as-sponsor entry point. Public — the token is the
+            auth; if it is missing or spent the page bounces to /login. */}
+        <Route path="impersonate" element={<Impersonate />} />
 
         <Route
           path="dashboard"
