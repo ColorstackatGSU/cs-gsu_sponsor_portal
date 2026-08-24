@@ -65,20 +65,33 @@ export default function WelcomeOverlay({ onComplete }: Props) {
       aria-label={me ? `Signing you in as ${me.contact.fullName ?? me.contact.email} at ${sponsorName}` : 'Signing you in'}
     >
       <div className="welcome-inner">
-        {/* Ink frame, yellow fill, ink check. Yellow rather than the sponsor's
-            colour: the brand already owns the full-screen background, and a dark
-            brand would swallow a black check mark drawn on top of it. */}
-        <svg className="welcome-check" viewBox="0 0 60 60" width="62" height="62" aria-hidden="true">
-          <rect x="3" y="3" width="54" height="54" fill="var(--yellow)" stroke="currentColor" strokeWidth="3.5" />
-          <path
-            d="M17 31 L26 40 L43 21"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="5"
-            strokeLinecap="square"
-            strokeLinejoin="miter"
+        {me?.sponsor.logoUrl ? (
+          /* When the sponsor has a logo, it IS the hero: the checkmark would
+             fight it for attention and the brand background already gives the
+             animation its personality. Broken/missing URLs hide themselves so
+             we fall through to the checkmark-only look. */
+          <img
+            className="welcome-logo"
+            src={me.sponsor.logoUrl}
+            alt=""
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
           />
-        </svg>
+        ) : (
+          /* Ink frame, yellow fill, ink check. Yellow rather than the sponsor's
+             colour: the brand already owns the full-screen background, and a dark
+             brand would swallow a black check mark drawn on top of it. */
+          <svg className="welcome-check" viewBox="0 0 60 60" width="62" height="62" aria-hidden="true">
+            <rect x="3" y="3" width="54" height="54" fill="var(--yellow)" stroke="currentColor" strokeWidth="3.5" />
+            <path
+              d="M17 31 L26 40 L43 21"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="5"
+              strokeLinecap="square"
+              strokeLinejoin="miter"
+            />
+          </svg>
+        )}
         <p className="welcome-hi">Welcome</p>
         <p className="welcome-sponsor">{sponsorName}</p>
       </div>

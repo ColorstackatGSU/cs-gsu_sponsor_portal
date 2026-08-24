@@ -38,6 +38,9 @@ export type Me = {
     tierId: string | null;
     tierName: string | null;
     websiteUrl: string | null;
+    /** Short-lived signed URL to the sponsor's uploaded logo, or null.
+     *  Re-signed each time /me is called; do not cache across reloads. */
+    logoUrl: string | null;
   };
 };
 

@@ -66,6 +66,18 @@ export default function Dashboard() {
     <div className="page">
       <div className="wrap">
         <header className="page-head">
+          {sponsor.logoUrl && (
+            /* Sponsor's own logo when they have uploaded one. Framed as a
+               square avatar so a wide wordmark and a square icon both sit
+               well next to the heading. Fades in on load so a slow signed
+               URL does not cause a layout jump. */
+            <img
+              className="sponsor-mark"
+              src={sponsor.logoUrl}
+              alt=""
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+          )}
           <span className="eyebrow">Sponsor dashboard</span>
           <h1>{sponsor.name}</h1>
           <p className="page-sub">
