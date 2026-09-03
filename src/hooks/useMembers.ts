@@ -17,6 +17,8 @@ export type ApiMember = {
   gradTerm: string | null;
   gradYear: number | null;
   linkedinUrl: string | null;
+  /** Personal address where the member gave one, otherwise their school address. */
+  contactEmail: string | null;
   hasResume: boolean;
 };
 

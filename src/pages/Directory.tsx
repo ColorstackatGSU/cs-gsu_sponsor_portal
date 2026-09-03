@@ -166,6 +166,15 @@ function MemberRow({ member, first }: { member: ApiMember; first: boolean }) {
             {summaryBits.join(' · ')}
           </p>
         )}
+        {/* The point of the directory is that a recruiter who likes a resume can act on
+            it. Without an address that meant going back through an officer. */}
+        {member.contactEmail && (
+          <p style={{ margin: '4px 0 0', fontSize: 13.5 }}>
+            <a href={`mailto:${member.contactEmail}`} className="link">
+              {member.contactEmail}
+            </a>
+          </p>
+        )}
         {error && (
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--bad)' }}>{error}</p>
         )}
