@@ -10,11 +10,3 @@ export type InvoiceStatus = 'draft' | 'issued' | 'processing' | 'paid' | 'void';
 export type PaymentMethod = 'card' | 'ach' | 'wire' | 'check';
 
 export type TaskStatus = 'todo' | 'done';
-
-export interface Tier {
-  id: string;
-  name: string;
-  amountCents: number;
-  benefits: string[];
-  sortOrder: number;
-}

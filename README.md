@@ -3,9 +3,9 @@
 Sponsors sign in, see their sponsorship and what we need from them, generate invoices,
 and pay by card, bank transfer, or wire. Deploys to **sponsors.colorstackatgsu.com**.
 
-**Status: steps 1 and 2 of 11 complete.** The design system, routing, and page shells are
-in place and read from `src/data/mock.ts`. Nothing talks to a backend yet. Forms are
-deliberately inert rather than faked.
+**Status: wired to the chapter API.** Sign-in goes through Supabase Auth, and the pages
+read their data from the chapter API through the hooks in `src/hooks`. The mock data
+file is gone.
 
 ```bash
 npm install

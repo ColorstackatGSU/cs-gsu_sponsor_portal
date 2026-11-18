@@ -550,18 +550,6 @@
 .btn-ink { background: var(--ink); color: var(--paper); }
 .btn-ink:hover:not(:disabled) { background: #2a251d; }
 
-.btn-danger { background: var(--paper); color: var(--bad); }
-.btn-danger:hover:not(:disabled) { background: var(--bad-fill); color: var(--ink); }
-
-/* Text-only. The one control without a frame, for tertiary actions. */
-.btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-  color: var(--ink-muted);
-}
-.btn-ghost:hover:not(:disabled) { background: var(--yellow); color: var(--ink); transform: none; box-shadow: none; }
-
 .btn:disabled {
   cursor: not-allowed;
   background: var(--surface-subtle);
@@ -665,23 +653,8 @@
   line-height: 1.5;
 }
 .note-info  { background: var(--info-bg); color: var(--ink); }
-.note-warn  { background: var(--warn-bg); color: var(--ink); }
 .note-error { background: var(--bad-bg);  color: var(--ink); }
 .note-ok    { background: var(--ok-bg);   color: var(--ink); }
-
-/* Marks a screen that is not wired up yet. Dashed so it never reads as real UI. */
-.note-preview {
-  border: var(--bw) dashed var(--ink-faint);
-  background: transparent;
-  box-shadow: none;
-  padding: 10px 13px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  text-align: center;
-}
 
 /* ============================================================================
    STATUS PILLS
@@ -948,7 +921,7 @@
 @media print {
   @page { margin: 16mm; }
 
-  .side, .side-top, .scrim, .auth-foot, .no-print, .note-preview { display: none !important; }
+  .side, .side-top, .scrim, .auth-foot, .no-print { display: none !important; }
 
   .side-main { margin-left: 0 !important; padding: 0 !important; }
   .side-wrap { display: block !important; }

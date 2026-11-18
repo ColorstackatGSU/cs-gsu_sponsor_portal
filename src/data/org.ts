@@ -12,14 +12,7 @@
 
 export const ORG = {
   legalName: 'ColorStack at Georgia State University',
-  displayName: 'ColorStack at GSU',
-  addressLines: ['Georgia State University', 'Atlanta, GA'],
-  email: 'official@colorstackatgsu.com',
   billingEmail: 'official@colorstackatgsu.com',
-  site: 'https://colorstackatgsu.com',
-  /** Empty string means "not confirmed yet". The invoice hides the row rather than
-      printing a placeholder a sponsor might try to pay against. */
-  ein: '',
 } as const;
 
 export const REMITTANCE = {
@@ -33,8 +26,3 @@ export const REMITTANCE = {
 
 /** True once someone has actually filled the bank details in. */
 export const REMITTANCE_READY = Boolean(REMITTANCE.bankName && REMITTANCE.routingNumber);
-
-export const SOCIAL = {
-  instagram: 'https://instagram.com/colorstackatgsu',
-  linkedin: 'https://linkedin.com/company/colorstack-gsu',
-} as const;
